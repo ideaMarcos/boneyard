@@ -4,8 +4,8 @@ defmodule Boneyard.TileTest do
 
   describe "Tile" do
     test "new/1" do
-      actual = Tile.new(13)
-      expected = %Boneyard.Tile{left_val: 3, right_val: 1, id: 31}
+      actual = Tile.new(1)
+      expected = %Boneyard.Tile{left_val: 1, right_val: 0, id: 10}
       assert actual == expected
     end
 
@@ -16,8 +16,8 @@ defmodule Boneyard.TileTest do
     end
 
     test "new/1 == new/2" do
-      left_val = Enum.random(1..9)
-      right_val = Enum.random(1..9)
+      left_val = Enum.random(0..9)
+      right_val = Enum.random(0..9)
       new2 = Tile.new(left_val, right_val)
       new1 = Tile.new(new2.id)
       assert new1 === new2

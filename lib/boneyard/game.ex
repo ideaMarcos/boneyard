@@ -2,12 +2,16 @@ defmodule Boneyard.Game do
   alias Boneyard.Tile
 
   defstruct num_hands: nil,
+            num_tiles_per_hand: nil,
+            max_tile_val: nil,
             hands: nil,
             line_of_play: nil,
             active_hand: nil,
+            is_round_over: nil,
             is_game_over: nil,
             pass_count: nil,
-            boneyard: nil
+            boneyard: nil,
+            scores: nil
 
   def new(num_hands, num_tiles_per_hand, max_tile_val)
       when num_hands in [2, 3, 4] and num_tiles_per_hand in [5, 7] and max_tile_val in [6, 9] do
@@ -18,11 +22,15 @@ defmodule Boneyard.Game do
     game = %__MODULE__{
       active_hand: hand_with_highest_double_or_tile(hands),
       hands: hands,
-      num_hands: length(hands),
+      num_hands: num_hands,
+      num_tiles_per_hand: num_tiles_per_hand,
+      max_tile_val: max_tile_val,
       line_of_play: [],
+      is_round_over: false,
       is_game_over: false,
       pass_count: 0,
-      boneyard: boneyard
+      boneyard: boneyard,
+      scores: Enum.map(hands, fn _ -> 0 end)
     }
 
     {:ok, game}
@@ -31,6 +39,32 @@ defmodule Boneyard.Game do
   def new(_, _, _) do
     {:error, :invalid_options}
   end
+
+  # def score_round(%__MODULE__{is_round_over: true} = game) do
+  #   game = %__MODULE__{
+  #     scores: Enum.map(game.scores, fn x -> x + 20 end)
+  #   }
+
+  #   {:ok, game}
+  # end
+
+  # def new_round(%__MODULE__{boneyard: []} = game) do
+  #   {hands, boneyard} =
+  #     collect_tiles(game.max_tile_val)
+  #     |> divvy_up(game.num_hands, game.num_tiles_per_hand)
+
+  #   game = %__MODULE__{
+  #     active_hand: hand_with_highest_double_or_tile(hands),
+  #     hands: hands,
+  #     line_of_play: [],
+  #     is_round_over: false,
+  #     is_game_over: false,
+  #     pass_count: 0,
+  #     boneyard: boneyard
+  #   }
+
+  #   {:ok, game}
+  # end
 
   def take_from_boneyard(%__MODULE__{boneyard: []} = game) do
     pass(game)
@@ -48,19 +82,25 @@ defmodule Boneyard.Game do
     {:ok, new_game}
   end
 
-  def pass(%__MODULE__{is_game_over: true}) do
-    {:error, :game_over}
+  def pass(%__MODULE__{is_round_over: true} = game) do
+    {:error, :game_over, game}
   end
 
   def pass(%__MODULE__{} = game) do
-    new_game = %{
-      game
-      | active_hand: next_active_hand(game),
-        is_game_over: game.pass_count + 1 >= game.num_hands,
-        pass_count: game.pass_count + 1
-    }
+    case playable_tiles(game) do
+      [] ->
+        new_game = %{
+          game
+          | active_hand: next_active_hand(game),
+            is_round_over: game.pass_count + 1 >= game.num_hands,
+            pass_count: game.pass_count + 1
+        }
 
-    {:ok, new_game}
+        {:ok, new_game}
+
+      _ ->
+        {:error, :must_use_playable_tiles, game}
+    end
   end
 
   def play_random_tile(%__MODULE__{} = game) do
@@ -70,15 +110,10 @@ defmodule Boneyard.Game do
       |> Enum.sort_by(&Tile.first_mover_sum/1)
       |> List.last()
 
-    case tile && play_tile_on_left_side(game, tile.id) do
-      nil ->
-        {:error, :no_playable_tiles}
-
-      {:error, _} ->
-        play_tile_on_right_side(game, tile.id)
-
-      ok ->
-        ok
+    if not is_nil(tile) do
+      play_tile(game, tile.id)
+    else
+      {:error, :no_playable_tiles, game}
     end
   end
 
@@ -95,21 +130,29 @@ defmodule Boneyard.Game do
     |> Enum.sort()
   end
 
-  def play_tile_on_right_side(%__MODULE__{} = game, tile_id)
-      when is_integer(tile_id) do
-    play_tile(%__MODULE__{} = game, :right_side, tile_id)
+  def play_tile(%__MODULE__{} = game, tile_id) when is_integer(tile_id) do
+    case play_tile_on_left_side(game, tile_id) do
+      {:error, _} ->
+        play_tile_on_right_side(game, tile_id)
+
+      ok ->
+        ok
+    end
   end
 
-  def play_tile_on_left_side(%__MODULE__{} = game, tile_id)
-      when is_integer(tile_id) do
-    play_tile(%__MODULE__{} = game, :left_side, tile_id)
+  def play_tile_on_right_side(%__MODULE__{} = game, tile_id) when is_integer(tile_id) do
+    do_play_tile(%__MODULE__{} = game, :right_side, tile_id)
   end
 
-  defp play_tile(%__MODULE__{is_game_over: true}, _, _) do
-    {:error, :game_over}
+  def play_tile_on_left_side(%__MODULE__{} = game, tile_id) when is_integer(tile_id) do
+    do_play_tile(%__MODULE__{} = game, :left_side, tile_id)
   end
 
-  defp play_tile(%__MODULE__{} = game, side, tile_id) when side in [:left_side, :right_side] do
+  defp do_play_tile(%__MODULE__{is_round_over: true} = game, _, _) do
+    {:error, :game_over, game}
+  end
+
+  defp do_play_tile(%__MODULE__{} = game, side, tile_id) when side in [:left_side, :right_side] do
     player_tile = Tile.new(tile_id)
 
     with {:ok, player_tile} <- match_player_tile_to_line(side, game.line_of_play, player_tile),
@@ -119,7 +162,7 @@ defmodule Boneyard.Game do
         | active_hand: next_active_hand(game),
           hands: new_hands,
           line_of_play: add_tile_to_line(side, game.line_of_play, player_tile),
-          is_game_over: Enum.any?(new_hands, fn hand -> hand === [] end),
+          is_round_over: Enum.any?(new_hands, fn hand -> hand === [] end),
           pass_count: 0
       }
 
