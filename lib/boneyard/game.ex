@@ -6,20 +6,26 @@ defmodule Boneyard.Game do
             max_tile_val: nil,
             hands: nil,
             line_of_play: nil,
-            active_hand: nil,
+            active_player: nil,
             is_round_over: nil,
             is_game_over: nil,
-            pass_count: nil,
+            last_player: nil,
             boneyard: nil,
-            scores: nil
+            scores: nil,
+            is_team: nil
+
+  def new(num_hands, 7 = _num_tiles_per_hand, 6 = _max_tile_val) when num_hands > 4 do
+    {:error, :not_enough_tiles}
+  end
 
   def new(num_hands, num_tiles_per_hand, max_tile_val)
-      when num_hands in [2, 3, 4] and num_tiles_per_hand in [5, 7] and max_tile_val in [6, 9] do
+      when num_hands in 2..6 and num_tiles_per_hand in [5, 7] and max_tile_val in [6, 9] do
     %__MODULE__{
       num_hands: num_hands,
       num_tiles_per_hand: num_tiles_per_hand,
       max_tile_val: max_tile_val,
-      scores: Enum.map(1..num_hands, fn _ -> 0 end)
+      scores: Enum.map(1..num_hands, fn _ -> 0 end),
+      is_team: false
     }
     |> new_round()
   end
@@ -35,29 +41,19 @@ defmodule Boneyard.Game do
 
     new_game = %{
       game
-      | active_hand: hand_with_highest_double_or_tile(hands),
+      | active_player: hand_with_highest_double_or_tile(hands),
         hands: hands,
         line_of_play: [],
         is_round_over: false,
         is_game_over: false,
-        pass_count: 0,
         boneyard: boneyard
     }
 
     {:ok, new_game}
   end
 
-  # def score_round(%__MODULE__{is_round_over: true} = game) do
-  #   game = %{
-  #     game
-  #     | scores: Enum.map(game.scores, fn x -> x + 20 end)
-  #   }
-
-  #   {:ok, game}
-  # end
-
-  def take_from_boneyard(%__MODULE__{boneyard: []} = game) do
-    pass(game)
+  def take_from_boneyard(%__MODULE__{boneyard: []}) do
+    {:error, :boneyard_empty}
   end
 
   def take_from_boneyard(%__MODULE__{} = game) do
@@ -66,7 +62,7 @@ defmodule Boneyard.Game do
     new_game = %{
       game
       | boneyard: rest,
-        hands: add_tile_to_active_hand(game, tile)
+        hands: add_tile_to_active_player(game, tile)
     }
 
     {:ok, new_game}
@@ -81,9 +77,8 @@ defmodule Boneyard.Game do
       [] ->
         new_game = %{
           game
-          | active_hand: next_active_hand(game),
-            is_round_over: game.pass_count + 1 >= game.num_hands,
-            pass_count: game.pass_count + 1
+          | active_player: next_active_player(game),
+            is_round_over: game.last_player === game.active_player
         }
 
         {:ok, new_game}
@@ -112,7 +107,7 @@ defmodule Boneyard.Game do
     right_tile = List.last(game.line_of_play)
 
     game.hands
-    |> Enum.at(game.active_hand)
+    |> Enum.at(game.active_player)
     |> Enum.filter(fn player_tile ->
       tiles_match?(:left_side, left_tile, player_tile) or
         tiles_match?(:right_side, right_tile, player_tile)
@@ -146,14 +141,14 @@ defmodule Boneyard.Game do
     player_tile = Tile.new(tile_id)
 
     with {:ok, player_tile} <- match_player_tile_to_line(side, game.line_of_play, player_tile),
-         {:ok, new_hands} <- remove_tile_from_active_hand(game, player_tile) do
+         {:ok, new_hands} <- remove_tile_from_active_player(game, player_tile) do
       new_game = %{
         game
-        | active_hand: next_active_hand(game),
+        | active_player: next_active_player(game),
           hands: new_hands,
           line_of_play: add_tile_to_line(side, game.line_of_play, player_tile),
           is_round_over: Enum.any?(new_hands, fn hand -> hand === [] end),
-          pass_count: 0
+          last_player: game.active_player
       }
 
       {:ok, new_game}
@@ -201,32 +196,32 @@ defmodule Boneyard.Game do
     end
   end
 
-  defp add_tile_to_active_hand(
-         %__MODULE__{hands: hands, active_hand: active_hand},
+  defp add_tile_to_active_player(
+         %__MODULE__{hands: hands, active_player: active_player},
          %Tile{} = tile
        ) do
-    old_hand = Enum.at(hands, active_hand)
+    old_hand = Enum.at(hands, active_player)
     new_hand = Enum.sort(old_hand ++ tile)
 
-    List.replace_at(hands, active_hand, new_hand)
+    List.replace_at(hands, active_player, new_hand)
   end
 
-  defp remove_tile_from_active_hand(
-         %__MODULE__{hands: hands, active_hand: active_hand},
+  defp remove_tile_from_active_player(
+         %__MODULE__{hands: hands, active_player: active_player},
          %Tile{} = player_tile
        ) do
-    old_hand = Enum.at(hands, active_hand)
+    old_hand = Enum.at(hands, active_player)
     {matched_tiles, new_hand} = Enum.split_with(old_hand, fn x -> Tile.===(x, player_tile) end)
 
     if matched_tiles !== [] do
-      {:ok, List.replace_at(hands, active_hand, new_hand)}
+      {:ok, List.replace_at(hands, active_player, new_hand)}
     else
-      {:error, :tile_not_in_active_hand}
+      {:error, :tile_not_in_active_player}
     end
   end
 
-  defp next_active_hand(game),
-    do: rem(game.active_hand + 1, game.num_hands)
+  defp next_active_player(%__MODULE__{} = game),
+    do: rem(game.active_player + 1, game.num_hands)
 
   defp collect_tiles(max_tile_val) do
     for left_val <- 0..max_tile_val, right_val <- 0..left_val do
@@ -263,10 +258,10 @@ defmodule Boneyard.Game do
 
   defp hand_fair?(tiles) do
     not too_many_doubles?(tiles) and
-      not too_many_of_same_value?(tiles)
+      not too_many_of_same_suit?(tiles)
   end
 
-  defp too_many_of_same_value?(tiles) do
+  defp too_many_of_same_suit?(tiles) do
     tiles
     |> Enum.flat_map(fn x -> Enum.uniq([x.left_val, x.right_val]) end)
     |> Enum.frequencies()
@@ -288,5 +283,67 @@ defmodule Boneyard.Game do
     |> Enum.zip(0..length(hands))
     |> Enum.max_by(fn {tile, _} -> Tile.first_mover_sum(tile) end)
     |> elem(1)
+  end
+
+  def score_previous_move(%__MODULE__{is_round_over: true} = game) do
+    winning_player =
+      game.hands
+      |> Enum.map(&Tile.scoring_sum/1)
+      |> Enum.zip(0..length(game.hands))
+      |> Enum.min_by(fn {total, _} -> total end)
+      |> elem(1)
+
+    winning_hands =
+      if game.is_team do
+        [winning_player, teammate(winning_player, game.num_hands)]
+      else
+        [winning_player]
+      end
+
+    calculate_scores(game, winning_hands)
+  end
+
+  def score_previous_move(%__MODULE__{} = game) when game.active_player === game.last_player do
+    if playable_tiles(game) !== [] do
+      bonus_points = 20
+
+      scoring_hands =
+        if game.is_team do
+          [game.active_player, teammate(game.active_player, game.num_hands)]
+        else
+          [game.active_player]
+        end
+
+      game.scores
+      |> Enum.zip(0..length(game.hands))
+      |> Enum.map(fn {score, idx} ->
+        calculate_score(score, idx, bonus_points, scoring_hands)
+      end)
+    else
+      game.scores
+    end
+  end
+
+  defp calculate_scores(%__MODULE__{} = game, scoring_hands) do
+    points =
+      game.hands
+      |> Enum.map(&Tile.scoring_sum/1)
+      |> Enum.sum()
+
+    game.scores
+    |> Enum.zip(0..length(game.hands))
+    |> Enum.map(fn {score, idx} -> calculate_score(score, idx, points, scoring_hands) end)
+  end
+
+  defp calculate_score(score, idx, points, scoring_hands) do
+    if idx in scoring_hands do
+      score + points
+    else
+      score
+    end
+  end
+
+  defp teammate(player, num_hands) do
+    rem(player + rem(num_hands, 2), num_hands)
   end
 end

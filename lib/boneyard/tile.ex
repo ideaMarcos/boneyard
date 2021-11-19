@@ -1,4 +1,5 @@
 defmodule Boneyard.Tile do
+  @enforce_keys [:left_val, :right_val]
   defstruct id: nil, left_val: nil, right_val: nil
 
   def new(left_val, right_val)
@@ -47,11 +48,17 @@ defmodule Boneyard.Tile do
   def is_double(_),
     do: false
 
+  def scoring_sum(tiles) when is_list(tiles),
+    do: tiles |> Enum.map(&scoring_sum/1) |> Enum.sum()
+
   def scoring_sum(%__MODULE__{left_val: left_val, right_val: right_val}),
     do: left_val + right_val
 
   def scoring_sum(_),
     do: 0
+
+  def first_mover_sum(tiles) when is_list(tiles),
+    do: tiles |> Enum.map(&first_mover_sum/1) |> Enum.sum()
 
   def first_mover_sum(%__MODULE__{left_val: left_val, right_val: right_val} = tile) do
     left_val + right_val +

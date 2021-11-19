@@ -56,6 +56,7 @@ defmodule Boneyard.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
+      # compile: ["compile"],
       setup: ["deps.get"],
       "assets.deploy": ["esbuild default --minify", "phx.digest"]
     ]
