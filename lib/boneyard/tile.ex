@@ -1,7 +1,9 @@
 defmodule Boneyard.Tile do
   defstruct id: nil, left_val: nil, right_val: nil
 
-  def new(left_val, right_val) when is_integer(left_val) and is_integer(right_val) do
+  def new(left_val, right_val)
+      when left_val >= 0 and left_val <= 9 and
+             right_val >= 0 and right_val <= 9 do
     %__MODULE__{left_val: left_val, right_val: right_val}
     |> arrange()
     |> calculate_id()
