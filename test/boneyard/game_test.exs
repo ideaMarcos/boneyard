@@ -9,7 +9,8 @@ defmodule Boneyard.GameTest do
     max_tile_val = Enum.random([6, 9])
     {:ok, game} = Game.new(num_hands, num_tiles_per_hand, max_tile_val)
     {:ok, game_476} = Game.new(4, 7, 6)
-    %{game: game, game_476: game_476}
+    {:ok, game_356} = Game.new(3, 5, 6)
+    %{game: game, game_476: game_476, game_356: game_356}
   end
 
   describe "Game.new/3" do
@@ -17,7 +18,7 @@ defmodule Boneyard.GameTest do
       num_hands = Enum.random([2, 3, 4])
       num_tiles_per_hand = Enum.random([5, 7])
       max_tile_val = Enum.random([6, 9])
-      {:ok, game} = Game.new(num_hands, num_tiles_per_hand, max_tile_val)
+      assert {:ok, game} = Game.new(num_hands, num_tiles_per_hand, max_tile_val)
 
       assert game.num_hands === num_hands
       assert length(game.hands) === game.num_hands
@@ -31,22 +32,34 @@ defmodule Boneyard.GameTest do
       assert game.is_game_over === false
       assert is_nil(game.last_player)
     end
+
+    test "FAIL not enough tiles" do
+      assert {:error, :not_enough_tiles} = Game.new(6, 7, 6)
+    end
   end
 
   describe "Game.pass/1" do
-    test "PASS when no playable tiles", %{game: game1} do
+    test "PASS when no playable tiles", %{game_476: game1} do
       assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
       assert Game.playable_tiles(game2) === []
       assert is_nil(game2.last_player) === false
+      assert game2.boneyard === []
       assert {:ok, game3} = Game.pass(game2)
       assert game3.active_player === 0 or game3.active_player > game2.active_player
       assert game3.last_player === game2.last_player
     end
 
-    test "FAIL when playable tile available on first move of game", %{game: game1} do
+    test "FAIL when playable tile available", %{game_476: game1} do
       assert Game.playable_tiles(game1) !== []
       assert {:error, :must_use_playable_tiles, game2} = Game.pass(game1)
       assert game1 === game2
+    end
+
+    test "FAIL when boneyard not empty", %{game_356: game1} do
+      assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
+      assert game2.boneyard !== []
+      assert {:error, :boneyard_not_empty, game3} = Game.pass(game2)
+      assert game2 === game3
     end
   end
 

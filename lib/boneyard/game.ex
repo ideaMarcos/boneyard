@@ -52,8 +52,8 @@ defmodule Boneyard.Game do
     {:ok, new_game}
   end
 
-  def take_from_boneyard(%__MODULE__{boneyard: []}) do
-    {:error, :boneyard_empty}
+  def take_from_boneyard(%__MODULE__{boneyard: []} = game) do
+    {:error, :boneyard_empty, game}
   end
 
   def take_from_boneyard(%__MODULE__{} = game) do
@@ -72,19 +72,21 @@ defmodule Boneyard.Game do
     {:error, :round_over, game}
   end
 
+  def pass(%__MODULE__{boneyard: [_ | _]} = game) do
+    {:error, :boneyard_not_empty, game}
+  end
+
   def pass(%__MODULE__{} = game) do
-    case playable_tiles(game) do
-      [] ->
-        new_game = %{
-          game
-          | active_player: next_active_player(game),
-            is_round_over: game.last_player === game.active_player
-        }
+    if playable_tiles(game) === [] do
+      new_game = %{
+        game
+        | active_player: next_active_player(game),
+          is_round_over: game.last_player === game.active_player
+      }
 
-        {:ok, new_game}
-
-      _ ->
-        {:error, :must_use_playable_tiles, game}
+      {:ok, new_game}
+    else
+      {:error, :must_use_playable_tiles, game}
     end
   end
 
