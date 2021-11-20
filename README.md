@@ -1,5 +1,9 @@
 # Boneyard
 
+[![License](https://img.shields.io/github/license/ideaMarcos/boneyard.svg)](https://github.com/ideaMarcos/boneyard/blob/main/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/ideaMarcos/boneyard.svg)](https://github.com/ideaMarcos/boneyard/commits/main)
+
+
 To start your Phoenix server:
 
   * Install dependencies with `mix deps.get`
