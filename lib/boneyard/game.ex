@@ -57,7 +57,7 @@ defmodule Boneyard.Game do
   end
 
   def take_from_boneyard(%__MODULE__{} = game) do
-    [tile, rest] = game.boneyard
+    [tile | rest] = game.boneyard
 
     new_game = %{
       game
@@ -65,15 +65,15 @@ defmodule Boneyard.Game do
         hands: add_tile_to_active_player(game, tile)
     }
 
-    {:ok, new_game}
+    {:ok, tile, new_game}
   end
 
-  def pass(%__MODULE__{is_round_over: true} = game) do
-    {:error, :round_over, game}
+  def pass(%__MODULE__{is_round_over: true}) do
+    {:error, :round_over}
   end
 
-  def pass(%__MODULE__{boneyard: [_ | _]} = game) do
-    {:error, :boneyard_not_empty, game}
+  def pass(%__MODULE__{boneyard: [_ | _]}) do
+    {:error, :boneyard_not_empty}
   end
 
   def pass(%__MODULE__{} = game) do
@@ -86,7 +86,7 @@ defmodule Boneyard.Game do
 
       {:ok, new_game}
     else
-      {:error, :must_use_playable_tiles, game}
+      {:error, :must_use_playable_tiles}
     end
   end
 
@@ -100,7 +100,7 @@ defmodule Boneyard.Game do
     if not is_nil(tile) do
       play_tile(game, tile.id)
     else
-      {:error, :no_playable_tiles, game}
+      {:error, :no_playable_tiles}
     end
   end
 
@@ -135,33 +135,33 @@ defmodule Boneyard.Game do
     do_play_tile(%__MODULE__{} = game, :left_side, tile_id)
   end
 
-  defp do_play_tile(%__MODULE__{is_round_over: true} = game, _, _) do
-    {:error, :round_over, game}
+  defp do_play_tile(%__MODULE__{is_round_over: true}, _, _) do
+    {:error, :round_over}
   end
 
   defp do_play_tile(%__MODULE__{} = game, side, tile_id) when side in [:left_side, :right_side] do
-    player_tile = Tile.new(tile_id)
+    tile = Tile.new(tile_id)
 
-    with {:ok, player_tile} <- match_player_tile_to_line(side, game.line_of_play, player_tile),
-         {:ok, new_hands} <- remove_tile_from_active_player(game, player_tile) do
+    with {:ok, tile} <- match_player_tile_to_line(side, game.line_of_play, tile),
+         {:ok, new_hands} <- remove_tile_from_active_player(game, tile) do
       new_game = %{
         game
         | active_player: next_active_player(game),
           hands: new_hands,
-          line_of_play: add_tile_to_line(side, game.line_of_play, player_tile),
+          line_of_play: add_tile_to_line(side, game.line_of_play, tile),
           is_round_over: Enum.any?(new_hands, fn hand -> hand === [] end),
           last_player: game.active_player
       }
 
-      {:ok, new_game}
+      {:ok, tile, new_game}
     end
   end
 
-  defp add_tile_to_line(:left_side, line_of_play, player_tile),
-    do: List.insert_at(line_of_play, 0, player_tile)
+  defp add_tile_to_line(:left_side, line_of_play, tile),
+    do: List.insert_at(line_of_play, 0, tile)
 
-  defp add_tile_to_line(:right_side, line_of_play, player_tile),
-    do: List.insert_at(line_of_play, -1, player_tile)
+  defp add_tile_to_line(:right_side, line_of_play, tile),
+    do: List.insert_at(line_of_play, -1, tile)
 
   defp match_player_tile_to_line(:left_side = side, line_of_play, player_tile) do
     line_tile = List.first(line_of_play)
@@ -203,17 +203,16 @@ defmodule Boneyard.Game do
          %Tile{} = tile
        ) do
     old_hand = Enum.at(hands, active_player)
-    new_hand = Enum.sort(old_hand ++ tile)
-
+    new_hand = Enum.sort([tile | old_hand])
     List.replace_at(hands, active_player, new_hand)
   end
 
   defp remove_tile_from_active_player(
          %__MODULE__{hands: hands, active_player: active_player},
-         %Tile{} = player_tile
+         %Tile{} = tile
        ) do
     old_hand = Enum.at(hands, active_player)
-    {matched_tiles, new_hand} = Enum.split_with(old_hand, fn x -> Tile.===(x, player_tile) end)
+    {matched_tiles, new_hand} = Enum.split_with(old_hand, fn x -> Tile.===(x, tile) end)
 
     if matched_tiles !== [] do
       {:ok, List.replace_at(hands, active_player, new_hand)}

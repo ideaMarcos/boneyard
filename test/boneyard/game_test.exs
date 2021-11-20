@@ -51,26 +51,39 @@ defmodule Boneyard.GameTest do
 
     test "FAIL when playable tile available", %{game_476: game1} do
       assert Game.playable_tiles(game1) !== []
-      assert {:error, :must_use_playable_tiles, game2} = Game.pass(game1)
-      assert game1 === game2
+      assert {:error, :must_use_playable_tiles} = Game.pass(game1)
     end
 
     test "FAIL when boneyard not empty", %{game_356: game1} do
       assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
       assert game2.boneyard !== []
-      assert {:error, :boneyard_not_empty, game3} = Game.pass(game2)
-      assert game2 === game3
+      assert {:error, :boneyard_not_empty} = Game.pass(game2)
+    end
+  end
+
+  describe "Game.take_from_boneyard/1" do
+    test "PASS when boneyard not empty", %{game_356: game1} do
+      assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
+      assert game2.boneyard !== []
+      assert {:ok, tile, game3} = Game.take_from_boneyard(game2)
+      assert tile_in_any_hand(game2.hands, tile) === false
+      assert tile_in_hand(game2.boneyard, tile) === true
+
+      assert game3.active_player === game2.active_player
+      hand = Enum.at(game3.hands, game3.active_player)
+      assert tile_in_hand(hand, tile) === true
     end
   end
 
   describe "Game.play_random_tile/1" do
     test "PASS playing tile in hand", %{game: game1} do
-      assert {:ok, game2} = Game.play_random_tile(game1)
+      assert {:ok, tile, game2} = Game.play_random_tile(game1)
       assert game2.last_player === game1.active_player
-      assert [player_tile] = game2.line_of_play
-      assert tile_in_any_hand(game2.hands, player_tile) === false
-      active_player = Enum.at(game1.hands, game1.active_player)
-      assert tile_in_hand(active_player, player_tile) === true
+      assert [^tile] = game2.line_of_play
+      assert tile_in_any_hand(game2.hands, tile) === false
+
+      hand = Enum.at(game1.hands, game1.active_player)
+      assert tile_in_hand(hand, tile) === true
     end
   end
 
@@ -81,9 +94,9 @@ defmodule Boneyard.GameTest do
         |> Game.playable_tiles()
         |> Enum.random()
 
-      active_player = Enum.at(game1.hands, game1.active_player)
-      assert tile_in_hand(active_player, player_tile) === true
-      assert {:ok, game2} = Game.play_tile(game1, player_tile.id)
+      hand = Enum.at(game1.hands, game1.active_player)
+      assert tile_in_hand(hand, player_tile) === true
+      assert {:ok, player_tile, game2} = Game.play_tile(game1, player_tile.id)
       assert game2.active_player === 0 or game2.active_player > game1.active_player
       assert game2.last_player === game1.active_player
       assert game2.line_of_play === [player_tile]
@@ -94,21 +107,22 @@ defmodule Boneyard.GameTest do
       line_tile = Tile.new(61)
       game2 = %{game1 | line_of_play: [line_tile]}
 
-      assert {:ok, game3} = Game.play_tile(game2, 66)
-      assert game3.line_of_play === [Tile.new(66), line_tile]
+      assert {:ok, player_tile, game3} = Game.play_tile(game2, 66)
+      assert game3.line_of_play === [player_tile, line_tile]
     end
 
     test "PASS playing on right side", %{game_476: game1} do
       line_tile = Tile.new(62) |> Tile.switch_sides()
       game2 = %{game1 | line_of_play: [line_tile]}
 
-      assert {:ok, game3} = Game.play_tile(game2, 66)
-      assert game3.line_of_play === [line_tile, Tile.new(66)]
+      assert {:ok, player_tile, game3} = Game.play_tile(game2, 66)
+      assert player_tile === Tile.new(66)
+      assert game3.line_of_play === [line_tile, player_tile]
     end
 
     test "FAIL playing tile not in hand", %{game: game1} do
-      assert {:ok, game2} = Game.play_random_tile(game1)
-      [tile] = game2.line_of_play
+      assert {:ok, tile, game2} = Game.play_random_tile(game1)
+      assert [^tile] = game2.line_of_play
       assert {:error, :tile_not_in_active_player} = Game.play_tile(game2, tile.id)
     end
   end
@@ -118,8 +132,9 @@ defmodule Boneyard.GameTest do
       line_tile = Tile.new(61)
       game2 = %{game1 | line_of_play: [line_tile]}
 
-      assert {:ok, game3} = Game.play_tile_on_left_side(game2, 66)
-      assert game3.line_of_play === [Tile.new(66), line_tile]
+      assert {:ok, player_tile, game3} = Game.play_tile_on_left_side(game2, 66)
+      assert player_tile === Tile.new(66)
+      assert game3.line_of_play === [player_tile, line_tile]
     end
 
     test "FAIL when no match", %{game: game1} do
@@ -135,8 +150,9 @@ defmodule Boneyard.GameTest do
       line_tile = Tile.new(62) |> Tile.switch_sides()
       game2 = %{game1 | line_of_play: [line_tile]}
 
-      assert {:ok, game3} = Game.play_tile_on_right_side(game2, 66)
-      assert game3.line_of_play === [line_tile, Tile.new(66)]
+      assert {:ok, player_tile, game3} = Game.play_tile_on_right_side(game2, 66)
+      assert player_tile === Tile.new(66)
+      assert game3.line_of_play === [line_tile, player_tile]
     end
 
     test "FAIL when no match", %{game: game1} do
@@ -149,11 +165,11 @@ defmodule Boneyard.GameTest do
 
   defp play_until_error(game) do
     case Game.play_random_tile(game) do
-      {:ok, new_game} ->
+      {:ok, _, new_game} ->
         play_until_error(new_game)
 
-      error ->
-        error
+      {:error, error} ->
+        {:error, error, game}
     end
   end
 
