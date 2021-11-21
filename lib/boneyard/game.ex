@@ -94,6 +94,10 @@ defmodule Boneyard.Game do
     end
   end
 
+  def play_random_tile(%__MODULE__{is_round_over: true}) do
+    {:error, :round_over}
+  end
+
   def play_random_tile(%__MODULE__{} = game) do
     tile =
       game
