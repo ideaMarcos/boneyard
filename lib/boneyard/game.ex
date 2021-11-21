@@ -52,20 +52,24 @@ defmodule Boneyard.Game do
     {:ok, new_game}
   end
 
-  def take_from_boneyard(%__MODULE__{boneyard: []} = game) do
-    {:error, :boneyard_empty, game}
+  def take_from_boneyard(%__MODULE__{boneyard: []}) do
+    {:error, :boneyard_empty}
   end
 
   def take_from_boneyard(%__MODULE__{} = game) do
-    [tile | rest] = game.boneyard
+    if playable_tiles(game) === [] do
+      [tile | rest] = game.boneyard
 
-    new_game = %{
-      game
-      | boneyard: rest,
-        hands: add_tile_to_active_player(game, tile)
-    }
+      new_game = %{
+        game
+        | boneyard: rest,
+          hands: add_tile_to_active_player(game, tile)
+      }
 
-    {:ok, tile, new_game}
+      {:ok, tile, new_game}
+    else
+      {:error, :must_use_playable_tiles}
+    end
   end
 
   def pass(%__MODULE__{is_round_over: true}) do
@@ -294,50 +298,45 @@ defmodule Boneyard.Game do
       |> Enum.min_by(fn {total, _} -> total end)
       |> elem(1)
 
-    winning_hands =
+    players =
       if game.is_team do
         [winning_player, teammate(winning_player, game.num_hands)]
       else
         [winning_player]
       end
 
-    calculate_scores(game, winning_hands)
+    bonus_points =
+      game.hands
+      |> Enum.map(&Tile.scoring_sum/1)
+      |> Enum.sum()
+
+    compute_scores(game, bonus_points, players)
   end
 
   def score_previous_move(%__MODULE__{} = game) when game.active_player === game.last_player do
     if playable_tiles(game) !== [] do
-      bonus_points = 20
-
-      scoring_hands =
+      players =
         if game.is_team do
           [game.active_player, teammate(game.active_player, game.num_hands)]
         else
           [game.active_player]
         end
 
-      game.scores
-      |> Enum.zip(0..length(game.hands))
-      |> Enum.map(fn {score, idx} ->
-        calculate_score(score, idx, bonus_points, scoring_hands)
-      end)
+      bonus_points = 20
+      compute_scores(game, bonus_points, players)
     else
       game.scores
     end
   end
 
-  defp calculate_scores(%__MODULE__{} = game, scoring_hands) do
-    points =
-      game.hands
-      |> Enum.map(&Tile.scoring_sum/1)
-      |> Enum.sum()
-
+  defp compute_scores(%__MODULE__{} = game, bonus_points, players) do
     game.scores
     |> Enum.zip(0..length(game.hands))
-    |> Enum.map(fn {score, idx} -> calculate_score(score, idx, points, scoring_hands) end)
+    |> Enum.map(fn {score, idx} -> compute_score(score, idx, bonus_points, players) end)
   end
 
-  defp calculate_score(score, idx, points, scoring_hands) do
-    if idx in scoring_hands do
+  defp compute_score(score, idx, points, players) do
+    if idx in players do
       score + points
     else
       score

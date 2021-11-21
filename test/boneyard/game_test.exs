@@ -40,7 +40,7 @@ defmodule Boneyard.GameTest do
 
   describe "Game.pass/1" do
     test "PASS when no playable tiles", %{game_476: game1} do
-      assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
+      assert {:error, :no_playable_tiles, game2} = play_random_until_no_playable_tiles(game1)
       assert Game.playable_tiles(game2) === []
       assert is_nil(game2.last_player) === false
       assert game2.boneyard === []
@@ -55,7 +55,7 @@ defmodule Boneyard.GameTest do
     end
 
     test "FAIL when boneyard not empty", %{game_356: game1} do
-      assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
+      assert {:error, :no_playable_tiles, game2} = play_random_until_no_playable_tiles(game1)
       assert game2.boneyard !== []
       assert {:error, :boneyard_not_empty} = Game.pass(game2)
     end
@@ -63,7 +63,7 @@ defmodule Boneyard.GameTest do
 
   describe "Game.take_from_boneyard/1" do
     test "PASS when boneyard not empty", %{game_356: game1} do
-      assert {:error, :no_playable_tiles, game2} = play_until_error(game1)
+      assert {:error, :no_playable_tiles, game2} = play_random_until_no_playable_tiles(game1)
       assert game2.boneyard !== []
       assert {:ok, tile, game3} = Game.take_from_boneyard(game2)
       assert tile_in_any_hand(game2.hands, tile) === false
@@ -72,6 +72,16 @@ defmodule Boneyard.GameTest do
       assert game3.active_player === game2.active_player
       hand = Enum.at(game3.hands, game3.active_player)
       assert tile_in_hand(hand, tile) === true
+    end
+
+    test "FAIL when boneyard empty", %{game_476: game1} do
+      assert game1.boneyard === []
+      assert {:error, :boneyard_empty} = Game.take_from_boneyard(game1)
+    end
+
+    test "FAIL when playable tile available", %{game_356: game1} do
+      assert Game.playable_tiles(game1) !== []
+      assert {:error, :must_use_playable_tiles} = Game.take_from_boneyard(game1)
     end
   end
 
@@ -163,15 +173,41 @@ defmodule Boneyard.GameTest do
     end
   end
 
-  defp play_until_error(game) do
+  defp play_random_until_no_playable_tiles(game) do
     case Game.play_random_tile(game) do
       {:ok, _, new_game} ->
-        play_until_error(new_game)
+        play_random_until_no_playable_tiles(new_game)
 
       {:error, error} ->
         {:error, error, game}
     end
   end
+
+  # defp play_random_until_round_over(game) do
+  #   case play_random_until_no_playable_tiles(game) do
+  #     {:error, :round_over} ->
+  #       {:error, :round_over, game}
+
+  #     {:ok, new_game} ->
+  #       play_random_until_no_playable_tiles(new_game)
+
+  #     error ->
+  #       take_until_playable_or_pass(game)
+  #   end
+  # end
+
+  # defp take_until_playable_or_pass(game) do
+  #   case Game.take_from_boneyard(game) do
+  #     {:ok, _, new_game} ->
+  #       take_until_playable_or_pass(game)
+
+  #     {:error, :must_use_playable_tiles} ->
+  #       Game.pass(game)
+
+  #     {:error, :boneyard_empty} ->
+  #       Game.pass(game)
+  #   end
+  # end
 
   defp tile_in_any_hand(hands, tile) do
     Enum.any?(hands, &tile_in_hand(&1, tile))

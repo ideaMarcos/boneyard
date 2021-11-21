@@ -7,7 +7,7 @@ defmodule Boneyard.Tile do
              right_val >= 0 and right_val <= 9 do
     %__MODULE__{left_val: left_val, right_val: right_val}
     |> arrange()
-    |> calculate_id()
+    |> compute_id()
   end
 
   def new(id) when id >= 0 and id <= 9 do
@@ -25,7 +25,7 @@ defmodule Boneyard.Tile do
 
   defp arrange(tile), do: tile
 
-  defp calculate_id(%__MODULE__{} = tile),
+  defp compute_id(%__MODULE__{} = tile),
     do: %{tile | id: tile.left_val * 10 + tile.right_val}
 
   def switch_sides(%__MODULE__{left_val: left_val, right_val: right_val} = tile),
