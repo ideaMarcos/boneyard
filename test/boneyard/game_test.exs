@@ -209,12 +209,12 @@ defmodule Boneyard.GameTest do
     {:error, error, game}
   end
 
+  # Playing or passing until round is over
   defp play_until_round_over(game) do
     Game.play_random_tile(game)
     |> play_until_round_over(game)
   end
 
-  # Playing or passing until round is over
   defp play_until_round_over({:ok, game}, _) do
     play_until_round_over(game)
   end
@@ -235,10 +235,6 @@ defmodule Boneyard.GameTest do
   defp play_until_round_over({:error, :boneyard_empty}, game) do
     Game.pass(game)
     |> play_until_round_over(game)
-  end
-
-  defp play_until_round_over({:error, :must_use_playable_tiles}, game) do
-    play_until_round_over(game)
   end
 
   defp tile_in_any_hand(hands, tile) do
