@@ -73,9 +73,6 @@ defmodule Boneyard.Tile do
 end
 
 defimpl String.Chars, for: Boneyard.Tile do
-  def to_string(%{left_val: val, right_val: val}),
-    do: "__#{val}__"
-
   def to_string(%{left_val: left_val, right_val: right_val}),
     do: "#{left_val}/#{right_val}"
 end

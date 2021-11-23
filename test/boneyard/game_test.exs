@@ -195,6 +195,41 @@ defmodule Boneyard.GameTest do
     end
   end
 
+  describe "Game.is_round_over" do
+    test "PASS when every player passes in consecutive moves", %{game_476: game1} do
+      assert {:ok, _, game2} = Game.play_random_tile(game1)
+
+      game3 = %{
+        game2
+        | line_of_play: [Tile.new(99)]
+      }
+
+      assert {:ok, game4} = Game.pass(game3)
+      assert {:ok, game5} = Game.pass(game4)
+      assert {:ok, game6} = Game.pass(game5)
+      assert {:ok, game7} = Game.pass(game6)
+
+      assert game3.is_round_over === false
+      assert game4.is_round_over === false
+      assert game5.is_round_over === false
+      assert game6.is_round_over === false
+      assert game7.is_round_over === true
+    end
+
+    test "PASS when any player has no tiles in hand", %{game: game1} do
+      assert {:ok, line_tile, game2} = Game.play_random_tile(game1)
+
+      game3 = %{
+        game2
+        | hands: Enum.map(1..game2.num_hands, fn _ -> [line_tile] end)
+      }
+
+      assert {:ok, _, game4} = Game.play_random_tile(game3)
+      assert game4.is_round_over === true
+      assert Enum.member?(game4.hands, []) === true
+    end
+  end
+
   # Playing until no playable tiles (before passing)
   defp play_until_no_playable_tiles(game) do
     Game.play_random_tile(game)
