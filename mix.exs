@@ -1,8 +1,6 @@
 defmodule Boneyard.MixProject do
   use Mix.Project
 
-  @source_url "https://github.com/ideaMarcos/boneyard"
-
   def project do
     [
       app: :boneyard,
@@ -12,7 +10,8 @@ defmodule Boneyard.MixProject do
       compilers: [:gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      source_url: "https://github.com/ideaMarcos/boneyard"
     ]
   end
 

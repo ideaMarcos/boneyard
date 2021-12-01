@@ -10,9 +10,11 @@ defmodule Boneyard.Game do
             is_round_over: nil,
             is_game_over: nil,
             last_player: nil,
+            winning_player: nil,
             boneyard: nil,
             scores: nil,
-            is_team: nil
+            is_team: nil,
+            passing_bonus: 20
 
   def new(num_hands, 7 = _num_tiles_per_hand, 6 = _max_tile_val) when num_hands > 4 do
     {:error, :not_enough_tiles}
@@ -41,12 +43,13 @@ defmodule Boneyard.Game do
 
     new_game = %{
       game
-      | active_player: hand_with_highest_double_or_tile(hands),
+      | active_player: game.active_player || hand_with_highest_double_or_tile(hands),
         hands: hands,
         line_of_play: [],
         is_round_over: false,
         is_game_over: false,
-        boneyard: boneyard
+        boneyard: boneyard,
+        winning_player: nil
     }
 
     {:ok, new_game}
@@ -82,11 +85,13 @@ defmodule Boneyard.Game do
 
   def pass(%__MODULE__{} = game) do
     if playable_tiles(game) === [] do
-      new_game = %{
-        game
-        | active_player: next_active_player(game),
-          is_round_over: game.last_player === game.active_player
-      }
+      new_game =
+        %{
+          game
+          | active_player: next_active_player(game),
+            is_round_over: game.last_player === game.active_player
+        }
+        |> score_previous_move()
 
       {:ok, new_game}
     else
@@ -152,14 +157,16 @@ defmodule Boneyard.Game do
 
     with {:ok, tile} <- match_player_tile_to_line(side, game.line_of_play, tile),
          {:ok, new_hands} <- remove_tile_from_active_player(game, tile) do
-      new_game = %{
-        game
-        | active_player: next_active_player(game),
-          hands: new_hands,
-          line_of_play: add_tile_to_line(side, game.line_of_play, tile),
-          is_round_over: Enum.any?(new_hands, fn hand -> hand === [] end),
-          last_player: game.active_player
-      }
+      new_game =
+        %{
+          game
+          | active_player: next_active_player(game),
+            hands: new_hands,
+            line_of_play: add_tile_to_line(side, game.line_of_play, tile),
+            is_round_over: Enum.member?(new_hands, []),
+            last_player: game.active_player
+        }
+        |> score_previous_move()
 
       {:ok, tile, new_game}
     end
@@ -294,10 +301,10 @@ defmodule Boneyard.Game do
     |> elem(1)
   end
 
-  def score_previous_move(%__MODULE__{is_round_over: true} = game) do
+  defp score_previous_move(%__MODULE__{is_round_over: true} = game) do
     winning_player =
       game.hands
-      |> Enum.map(&Tile.scoring_sum/1)
+      |> Enum.map(&Tile.winner_sums/1)
       |> Enum.zip(0..length(game.hands))
       |> Enum.min_by(fn {total, _} -> total end)
       |> elem(1)
@@ -309,15 +316,21 @@ defmodule Boneyard.Game do
         [winning_player]
       end
 
+    # TODO Capicú bonus
     bonus_points =
       game.hands
       |> Enum.map(&Tile.scoring_sum/1)
       |> Enum.sum()
 
-    compute_scores(game, bonus_points, players)
+    %{
+      game
+      | scores: compute_scores(game, bonus_points, players),
+        active_player: nil,
+        winning_player: winning_player
+    }
   end
 
-  def score_previous_move(%__MODULE__{} = game) when game.active_player === game.last_player do
+  defp score_previous_move(%__MODULE__{} = game) when game.active_player === game.last_player do
     if playable_tiles(game) !== [] do
       players =
         if game.is_team do
@@ -326,11 +339,19 @@ defmodule Boneyard.Game do
           [game.active_player]
         end
 
-      bonus_points = 20
-      compute_scores(game, bonus_points, players)
+      bonus_points = game.passing_bonus
+
+      %{
+        game
+        | scores: compute_scores(game, bonus_points, players)
+      }
     else
-      game.scores
+      game
     end
+  end
+
+  defp score_previous_move(%__MODULE__{} = game) do
+    game
   end
 
   defp compute_scores(%__MODULE__{} = game, bonus_points, players) do

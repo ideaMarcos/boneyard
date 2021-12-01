@@ -70,6 +70,19 @@ defmodule Boneyard.Tile do
 
   def first_mover_sum(_),
     do: 0
+
+  def winner_sums(tiles) when is_list(tiles) do
+    tiles = [new(0) | tiles]
+    tiles_sum = scoring_sum(tiles)
+    lowest_tile = Enum.min_by(tiles, &scoring_sum/1)
+
+    lowest_val =
+      tiles
+      |> Enum.flat_map(fn x -> [x.left_val, x.right_val] end)
+      |> Enum.min()
+
+    {tiles_sum, lowest_tile, lowest_val, tiles}
+  end
 end
 
 defimpl String.Chars, for: Boneyard.Tile do
