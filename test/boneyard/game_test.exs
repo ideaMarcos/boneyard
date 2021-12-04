@@ -196,7 +196,7 @@ defmodule Boneyard.GameTest do
   end
 
   describe "Game.is_round_over" do
-    test "PASS when game is locked. No passing_bonus", %{game_476: game1} do
+    test "PASS when game is locked. NO passing_bonus", %{game_476: game1} do
       assert {:ok, _, game2} = Game.play_random_tile(game1)
 
       game3 = %{
@@ -234,7 +234,8 @@ defmodule Boneyard.GameTest do
       assert Enum.member?(game4.hands, []) === true
     end
 
-    test "FAIL when player locks out others. Get passing_bonus", %{game_476: game1} do
+    test "FAIL when player locks out others. GET passing_bonus if it bonus + player score < winning score",
+         %{game_476: game1} do
       assert {:ok, _, game2} = Game.play_random_tile(game1)
 
       game3 = %{
@@ -242,7 +243,8 @@ defmodule Boneyard.GameTest do
         | line_of_play: [Tile.new(11)],
           hands: Enum.map(1..4, fn x -> [Tile.new(x, x), Tile.new(x, 9)] end),
           active_player: 0,
-          last_player: 5
+          last_player: 5,
+          winning_score: game2.passing_bonus + 1
       }
 
       assert {:ok, _, game4} = Game.play_random_tile(game3)
@@ -260,6 +262,28 @@ defmodule Boneyard.GameTest do
       assert game7.is_round_over === false
       assert Enum.sum(game7.scores) === game7.passing_bonus
       assert Enum.at(game7.scores, game7.last_player) === game7.passing_bonus
+    end
+
+    test "FAIL when player locks out others. NO passing_bonus if it bonus + player score >= winning score",
+         %{game_476: game1} do
+      assert {:ok, _, game2} = Game.play_random_tile(game1)
+
+      game3 = %{
+        game2
+        | line_of_play: [Tile.new(11)],
+          hands: Enum.map(1..4, fn x -> [Tile.new(x, x), Tile.new(x, 9)] end),
+          active_player: 0,
+          last_player: 5,
+          winning_score: game2.passing_bonus
+      }
+
+      assert {:ok, _, game4} = Game.play_random_tile(game3)
+      assert {:ok, game5} = Game.pass(game4)
+      assert {:ok, game6} = Game.pass(game5)
+      assert {:ok, game7} = Game.pass(game6)
+
+      assert game7.is_round_over === false
+      assert game6.scores === game7.scores
     end
   end
 

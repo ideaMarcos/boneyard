@@ -14,7 +14,8 @@ defmodule Boneyard.Game do
             boneyard: nil,
             scores: nil,
             is_team: nil,
-            passing_bonus: 20
+            passing_bonus: 20,
+            winning_score: 200
 
   def new(num_hands, 7 = _num_tiles_per_hand, 6 = _max_tile_val) when num_hands > 4 do
     {:error, :not_enough_tiles}
@@ -331,7 +332,9 @@ defmodule Boneyard.Game do
   end
 
   defp score_previous_move(%__MODULE__{} = game) when game.active_player === game.last_player do
-    if playable_tiles(game) !== [] do
+    potential_score = Enum.at(game.scores, game.active_player) + game.passing_bonus
+
+    if playable_tiles(game) !== [] and potential_score < game.winning_score do
       players =
         if game.is_team do
           [game.active_player, teammate(game.active_player, game.num_hands)]
@@ -339,11 +342,9 @@ defmodule Boneyard.Game do
           [game.active_player]
         end
 
-      bonus_points = game.passing_bonus
-
       %{
         game
-        | scores: compute_scores(game, bonus_points, players)
+        | scores: compute_scores(game, game.passing_bonus, players)
       }
     else
       game

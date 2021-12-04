@@ -5,7 +5,7 @@ defmodule Boneyard.MixProject do
     [
       app: :boneyard,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: ">= 1.13.0",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -34,15 +34,15 @@ defmodule Boneyard.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:esbuild, "~> 0.2", runtime: Mix.env() == :dev},
+      {:esbuild, "~> 0.4", runtime: Mix.env() == :dev},
       {:floki, ">= 0.30.0", only: :test},
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
       {:phoenix, "~> 1.6.2"},
-      {:phoenix_html, "~> 3.0"},
+      {:phoenix_html, "~> 3.1"},
       {:phoenix_live_dashboard, "~> 0.5"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 0.16.0"},
+      {:phoenix_live_reload, "~> 1.3", only: :dev},
+      {:phoenix_live_view, "~> 0.16"},
       {:plug_cowboy, "~> 2.5"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"}
@@ -57,9 +57,9 @@ defmodule Boneyard.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      # compile: ["compile"],
+      compile: ["compile --warnings-as-errors"],
       setup: ["deps.get"],
-      "assets.deploy": ["esbuild default --minify", "phx.digest"]
+      "assets.deploy": ["esbuild default --minify"]
     ]
   end
 end
