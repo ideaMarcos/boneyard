@@ -14,26 +14,32 @@ defmodule Boneyard.Game do
             boneyard: nil,
             scores: nil,
             is_team: nil,
-            passing_bonus: 20,
-            winning_score: 200
+            passing_bonus: nil,
+            capicú_bonus: nil,
+            winning_score: nil
 
-  def new(num_hands, 7 = _num_tiles_per_hand, 6 = _max_tile_val) when num_hands > 4 do
+  def new(num_hands, num_tiles_per_hand, max_tile_val, options \\ [])
+
+  def new(num_hands, 7 = _num_tiles_per_hand, 6 = _max_tile_val, _) when num_hands > 4 do
     {:error, :not_enough_tiles}
   end
 
-  def new(num_hands, num_tiles_per_hand, max_tile_val)
+  def new(num_hands, num_tiles_per_hand, max_tile_val, options)
       when num_hands in 2..6 and num_tiles_per_hand in [5, 7] and max_tile_val in [6, 9] do
     %__MODULE__{
       num_hands: num_hands,
       num_tiles_per_hand: num_tiles_per_hand,
       max_tile_val: max_tile_val,
       scores: Enum.map(1..num_hands, fn _ -> 0 end),
-      is_team: false
+      is_team: Keyword.get(options, :is_team, false),
+      passing_bonus: Keyword.get(options, :passing_bonus, 0),
+      capicú_bonus: Keyword.get(options, :capicú_bonus, 0),
+      winning_score: Keyword.get(options, :winning_score, 0)
     }
     |> new_round()
   end
 
-  def new(_, _, _) do
+  def new(_, _, _, _) do
     {:error, :invalid_options}
   end
 
@@ -92,7 +98,7 @@ defmodule Boneyard.Game do
           | active_player: next_active_player(game),
             is_round_over: game.last_player === game.active_player
         }
-        |> score_previous_move()
+        |> score_previous_move(nil)
 
       {:ok, new_game}
     else
@@ -105,16 +111,13 @@ defmodule Boneyard.Game do
   end
 
   def play_random_tile(%__MODULE__{} = game) do
-    tile =
-      game
-      |> playable_tiles()
-      |> Enum.sort_by(&Tile.first_mover_sum/1)
-      |> List.last()
-
-    if not is_nil(tile) do
-      play_tile(game, tile.id)
-    else
-      {:error, :no_playable_tiles}
+    game
+    |> playable_tiles()
+    |> Enum.sort_by(&Tile.first_mover_sum/1)
+    |> List.last()
+    |> case do
+      nil -> {:error, :no_playable_tiles}
+      tile -> play_tile(game, tile.id)
     end
   end
 
@@ -167,7 +170,7 @@ defmodule Boneyard.Game do
             is_round_over: Enum.member?(new_hands, []),
             last_player: game.active_player
         }
-        |> score_previous_move()
+        |> score_previous_move(tile)
 
       {:ok, tile, new_game}
     end
@@ -302,7 +305,26 @@ defmodule Boneyard.Game do
     |> elem(1)
   end
 
-  defp score_previous_move(%__MODULE__{is_round_over: true} = game) do
+  def capicú_bonus_points(%__MODULE__{} = game, last_tile, winning_player) do
+    left_tile = List.first(game.line_of_play)
+    right_tile = List.last(game.line_of_play)
+
+    cond do
+      !!last_tile and Tile.is_double(last_tile) ->
+        0
+
+      Enum.at(game.hands, winning_player) !== [] ->
+        0
+
+      left_tile.left_val === right_tile.right_val ->
+        game.capicú_bonus
+
+      :otherwise ->
+        0
+    end
+  end
+
+  defp score_previous_move(%__MODULE__{is_round_over: true} = game, last_tile) do
     winning_player =
       game.hands
       |> Enum.map(&Tile.winner_sums/1)
@@ -317,11 +339,12 @@ defmodule Boneyard.Game do
         [winning_player]
       end
 
-    # TODO Capicú bonus
     bonus_points =
       game.hands
       |> Enum.map(&Tile.scoring_sum/1)
       |> Enum.sum()
+
+    bonus_points = bonus_points + capicú_bonus_points(game, last_tile, winning_player)
 
     %{
       game
@@ -331,7 +354,8 @@ defmodule Boneyard.Game do
     }
   end
 
-  defp score_previous_move(%__MODULE__{} = game) when game.active_player === game.last_player do
+  defp score_previous_move(%__MODULE__{} = game, _last_tile)
+       when game.active_player === game.last_player do
     potential_score = Enum.at(game.scores, game.active_player) + game.passing_bonus
 
     if playable_tiles(game) !== [] and potential_score < game.winning_score do
@@ -351,7 +375,7 @@ defmodule Boneyard.Game do
     end
   end
 
-  defp score_previous_move(%__MODULE__{} = game) do
+  defp score_previous_move(%__MODULE__{} = game, _last_tile) do
     game
   end
 

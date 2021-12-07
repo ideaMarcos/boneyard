@@ -7,9 +7,16 @@ defmodule Boneyard.GameTest do
     num_hands = Enum.random(2..4)
     num_tiles_per_hand = Enum.random([5, 7])
     max_tile_val = Enum.random([6, 9])
-    {:ok, game} = Game.new(num_hands, num_tiles_per_hand, max_tile_val)
-    {:ok, game_476} = Game.new(4, 7, 6)
-    {:ok, game_379} = Game.new(3, 7, 9)
+
+    options = [
+      passing_bonus: Enum.random(20..29),
+      capicú_bonus: Enum.random(30..39),
+      winning_score: Enum.random([200, 209])
+    ]
+
+    {:ok, game} = Game.new(num_hands, num_tiles_per_hand, max_tile_val, options)
+    {:ok, game_476} = Game.new(4, 7, 6, options)
+    {:ok, game_379} = Game.new(3, 7, 9, options)
     %{game: game, game_476: game_476, game_379: game_379}
   end
 
@@ -196,13 +203,13 @@ defmodule Boneyard.GameTest do
   end
 
   describe "Game.is_round_over" do
-    test "PASS when game is locked. NO passing_bonus", %{game_476: game1} do
+    test "PASS when game is locked. NO passing_bonus. NO capicú_bonus", %{game_476: game1} do
       assert {:ok, _, game2} = Game.play_random_tile(game1)
 
       game3 = %{
         game2
-        | line_of_play: [Tile.new(99)],
-          hands: Enum.map(1..4, fn x -> [Tile.new(x)] end)
+        | line_of_play: Tile.new([99]),
+          hands: Enum.map(1..4, fn x -> Tile.new([x]) end)
       }
 
       assert {:ok, game4} = Game.pass(game3)
@@ -219,19 +226,38 @@ defmodule Boneyard.GameTest do
       assert game7.is_round_over === true
       assert Enum.sum(game7.scores) === 10
       assert Enum.at(game7.scores, game7.winning_player) === 10
+      assert Enum.member?(game7.hands, []) === false
     end
 
-    test "PASS when any player has empty hand", %{game: game1} do
-      assert {:ok, line_tile, game2} = Game.play_random_tile(game1)
-
-      game3 = %{
-        game2
-        | hands: Enum.map(1..game2.num_hands, fn _ -> [line_tile] end)
+    test "PASS when any player has empty hand. NO capicú_bonus if double played", %{game: game1} do
+      game2 = %{
+        game1
+        | hands: Enum.map(1..game1.num_hands, fn _ -> Tile.new([66]) end)
       }
 
-      assert {:ok, _, game4} = Game.play_random_tile(game3)
-      assert game4.is_round_over === true
-      assert Enum.member?(game4.hands, []) === true
+      assert {:ok, last_tile, game3} = Game.play_random_tile(game2)
+      assert Tile.is_double(last_tile) === true
+      assert game3.is_round_over === true
+      assert Enum.at(game3.hands, game3.winning_player) === []
+    end
+
+    test "PASS when any player has empty hand. GET capicú_bonus if tile played can match both sides of line",
+         %{game_476: game1} do
+      game2 = %{
+        game1
+        | line_of_play: Tile.new([89]),
+          hands: List.replace_at(game1.hands, game1.active_player, Tile.new([78, 79]))
+      }
+
+      assert {:ok, _, game3} = Game.play_random_tile(game2)
+      assert {:ok, game4} = Game.pass(game3)
+      assert {:ok, game5} = Game.pass(game4)
+      assert {:ok, game6} = Game.pass(game5)
+      assert {:ok, last_tile, game7} = Game.play_random_tile(game6)
+      assert Tile.is_double(last_tile) === false
+      assert game7.is_round_over === true
+      assert game7.last_player === game7.winning_player
+      assert Enum.at(game7.hands, game7.winning_player) === []
     end
 
     test "FAIL when player locks out others. GET passing_bonus if it bonus + player score < winning score",
@@ -240,8 +266,8 @@ defmodule Boneyard.GameTest do
 
       game3 = %{
         game2
-        | line_of_play: [Tile.new(11)],
-          hands: Enum.map(1..4, fn x -> [Tile.new(x, x), Tile.new(x, 9)] end),
+        | line_of_play: Tile.new([11]),
+          hands: Enum.map(1..4, fn x -> Tile.new([{x, x}, {x, 9}]) end),
           active_player: 0,
           last_player: 5,
           winning_score: game2.passing_bonus + 1
@@ -261,6 +287,7 @@ defmodule Boneyard.GameTest do
       assert Enum.all?(game6.scores, fn x -> x === 0 end)
       assert game7.is_round_over === false
       assert Enum.sum(game7.scores) === game7.passing_bonus
+      assert is_nil(game7.winning_player) === true
       assert Enum.at(game7.scores, game7.last_player) === game7.passing_bonus
     end
 
@@ -270,8 +297,8 @@ defmodule Boneyard.GameTest do
 
       game3 = %{
         game2
-        | line_of_play: [Tile.new(11)],
-          hands: Enum.map(1..4, fn x -> [Tile.new(x, x), Tile.new(x, 9)] end),
+        | line_of_play: Tile.new([11]),
+          hands: Enum.map(1..4, fn x -> Tile.new([{x, x}, {x, 9}]) end),
           active_player: 0,
           last_player: 5,
           winning_score: game2.passing_bonus

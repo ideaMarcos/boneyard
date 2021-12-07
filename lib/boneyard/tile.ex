@@ -19,6 +19,14 @@ defmodule Boneyard.Tile do
     new(left_val, right_val)
   end
 
+  def new({left_val, right_val}) do
+    new(left_val, right_val)
+  end
+
+  def new(ids) when is_list(ids) do
+    Enum.map(ids, &new/1)
+  end
+
   defp arrange(%__MODULE__{left_val: left_val, right_val: right_val} = tile)
        when left_val < right_val,
        do: switch_sides(tile)
