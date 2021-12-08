@@ -1,5 +1,6 @@
 defmodule Boneyard.GameTest do
   use ExUnit.Case, async: true
+  alias Boneyard.Cpu
   alias Boneyard.Game
   alias Boneyard.Tile
 
@@ -47,7 +48,7 @@ defmodule Boneyard.GameTest do
 
   describe "Game.pass/1" do
     test "PASS when no playable tiles", %{game_476: game1} do
-      assert {:error, :no_playable_tiles, game2} = play_until_no_playable_tiles(game1)
+      assert {:error, :no_playable_tiles, game2} = Cpu.play_until_no_playable_tiles(game1)
       assert Game.playable_tiles(game2) === []
       assert is_nil(game2.last_player) === false
       assert game2.boneyard === []
@@ -62,14 +63,14 @@ defmodule Boneyard.GameTest do
     end
 
     test "FAIL when boneyard not empty", %{game_379: game1} do
-      assert {:error, :no_playable_tiles, game2} = play_until_no_playable_tiles(game1)
+      assert {:error, :no_playable_tiles, game2} = Cpu.play_until_no_playable_tiles(game1)
       assert game2.boneyard !== []
       assert {:error, :boneyard_not_empty} = Game.pass(game2)
     end
 
     test "FAIL when round over", %{game_379: game1} do
       assert game1.is_round_over === false
-      assert {:error, :round_over, game2} = play_until_round_over(game1)
+      assert {:error, :round_over, game2} = Cpu.play_until_round_over(game1)
       assert game2.is_round_over === true
       assert {:error, :round_over} = Game.pass(game2)
     end
@@ -77,7 +78,7 @@ defmodule Boneyard.GameTest do
 
   describe "Game.take_from_boneyard/1" do
     test "PASS when boneyard not empty", %{game_379: game1} do
-      assert {:error, :no_playable_tiles, game2} = play_until_no_playable_tiles(game1)
+      assert {:error, :no_playable_tiles, game2} = Cpu.play_until_no_playable_tiles(game1)
       assert game2.boneyard !== []
       assert {:ok, tile, game3} = Game.take_from_boneyard(game2)
       assert tile_in_any_hand(game2.hands, tile) === false
@@ -99,9 +100,9 @@ defmodule Boneyard.GameTest do
     end
   end
 
-  describe "Game.play_random_tile/1" do
+  describe "Cpu.play_random_tile/1" do
     test "PASS playing tile in hand", %{game: game1} do
-      assert {:ok, tile, game2} = Game.play_random_tile(game1)
+      assert {:ok, tile, game2} = Cpu.play_random_tile(game1)
       assert game2.last_player === game1.active_player
       assert [^tile] = game2.line_of_play
       assert tile_in_any_hand(game2.hands, tile) === false
@@ -112,9 +113,9 @@ defmodule Boneyard.GameTest do
 
     test "FAIL when round over", %{game_379: game1} do
       assert game1.is_round_over === false
-      assert {:error, :round_over, game2} = play_until_round_over(game1)
+      assert {:error, :round_over, game2} = Cpu.play_until_round_over(game1)
       assert game2.is_round_over === true
-      assert {:error, :round_over} = Game.play_random_tile(game2)
+      assert {:error, :round_over} = Cpu.play_random_tile(game2)
     end
   end
 
@@ -152,14 +153,14 @@ defmodule Boneyard.GameTest do
     end
 
     test "FAIL playing tile not in hand", %{game: game1} do
-      assert {:ok, tile, game2} = Game.play_random_tile(game1)
+      assert {:ok, tile, game2} = Cpu.play_random_tile(game1)
       assert [^tile] = game2.line_of_play
       assert {:error, :tile_not_in_active_player} = Game.play_tile(game2, tile.id)
     end
 
     test "FAIL when round over", %{game_379: game1} do
       assert game1.is_round_over === false
-      assert {:error, :round_over, game2} = play_until_round_over(game1)
+      assert {:error, :round_over, game2} = Cpu.play_until_round_over(game1)
       assert game2.is_round_over === true
       tile_id = Enum.random(0..game1.max_tile_val)
       assert {:error, :round_over} = Game.play_tile(game2, tile_id)
@@ -204,7 +205,7 @@ defmodule Boneyard.GameTest do
 
   describe "Game.is_round_over" do
     test "PASS when game is locked. NO passing_bonus. NO capicú_bonus", %{game_476: game1} do
-      assert {:ok, _, game2} = Game.play_random_tile(game1)
+      assert {:ok, _, game2} = Cpu.play_random_tile(game1)
 
       game3 = %{
         game2
@@ -232,10 +233,10 @@ defmodule Boneyard.GameTest do
     test "PASS when any player has empty hand. NO capicú_bonus if double played", %{game: game1} do
       game2 = %{
         game1
-        | hands: Enum.map(1..game1.num_hands, fn _ -> Tile.new([66]) end)
+        | hands: List.duplicate(Tile.new([66]), game1.num_hands)
       }
 
-      assert {:ok, last_tile, game3} = Game.play_random_tile(game2)
+      assert {:ok, last_tile, game3} = Cpu.play_random_tile(game2)
       assert Tile.is_double(last_tile) === true
       assert game3.is_round_over === true
       assert Enum.at(game3.hands, game3.winning_player) === []
@@ -249,11 +250,11 @@ defmodule Boneyard.GameTest do
           hands: List.replace_at(game1.hands, game1.active_player, Tile.new([78, 79]))
       }
 
-      assert {:ok, _, game3} = Game.play_random_tile(game2)
+      assert {:ok, _, game3} = Cpu.play_random_tile(game2)
       assert {:ok, game4} = Game.pass(game3)
       assert {:ok, game5} = Game.pass(game4)
       assert {:ok, game6} = Game.pass(game5)
-      assert {:ok, last_tile, game7} = Game.play_random_tile(game6)
+      assert {:ok, last_tile, game7} = Cpu.play_random_tile(game6)
       assert Tile.is_double(last_tile) === false
       assert game7.is_round_over === true
       assert game7.last_player === game7.winning_player
@@ -262,98 +263,50 @@ defmodule Boneyard.GameTest do
 
     test "FAIL when player locks out others. GET passing_bonus if it bonus + player score < winning score",
          %{game_476: game1} do
-      assert {:ok, _, game2} = Game.play_random_tile(game1)
-
-      game3 = %{
-        game2
+      game2 = %{
+        game1
         | line_of_play: Tile.new([11]),
           hands: Enum.map(1..4, fn x -> Tile.new([{x, x}, {x, 9}]) end),
           active_player: 0,
           last_player: 5,
-          winning_score: game2.passing_bonus + 1
+          winning_score: game1.passing_bonus + 1
       }
 
-      assert {:ok, _, game4} = Game.play_random_tile(game3)
+      assert {:ok, _, game3} = Game.play_tile(game2, 11)
+      assert {:ok, game4} = Game.pass(game3)
       assert {:ok, game5} = Game.pass(game4)
       assert {:ok, game6} = Game.pass(game5)
-      assert {:ok, game7} = Game.pass(game6)
-      assert Game.playable_tiles(game7) !== []
+      assert Game.playable_tiles(game6) !== []
 
-      assert game2.is_round_over === false
       assert game3.is_round_over === false
       assert game4.is_round_over === false
       assert game5.is_round_over === false
+      assert Enum.all?(game5.scores, fn x -> x === 0 end)
       assert game6.is_round_over === false
-      assert Enum.all?(game6.scores, fn x -> x === 0 end)
-      assert game7.is_round_over === false
-      assert Enum.sum(game7.scores) === game7.passing_bonus
-      assert is_nil(game7.winning_player) === true
-      assert Enum.at(game7.scores, game7.last_player) === game7.passing_bonus
+      assert Enum.sum(game6.scores) === game6.passing_bonus
+      assert is_nil(game6.winning_player) === true
+      assert Enum.at(game6.scores, game6.last_player) === game6.passing_bonus
     end
 
     test "FAIL when player locks out others. NO passing_bonus if it bonus + player score >= winning score",
          %{game_476: game1} do
-      assert {:ok, _, game2} = Game.play_random_tile(game1)
-
-      game3 = %{
-        game2
+      game2 = %{
+        game1
         | line_of_play: Tile.new([11]),
           hands: Enum.map(1..4, fn x -> Tile.new([{x, x}, {x, 9}]) end),
           active_player: 0,
           last_player: 5,
-          winning_score: game2.passing_bonus
+          winning_score: game1.passing_bonus
       }
 
-      assert {:ok, _, game4} = Game.play_random_tile(game3)
+      assert {:ok, _, game3} = Game.play_tile(game2, 11)
+      assert {:ok, game4} = Game.pass(game3)
       assert {:ok, game5} = Game.pass(game4)
       assert {:ok, game6} = Game.pass(game5)
-      assert {:ok, game7} = Game.pass(game6)
 
-      assert game7.is_round_over === false
-      assert game6.scores === game7.scores
+      assert game6.is_round_over === false
+      assert game5.scores === game6.scores
     end
-  end
-
-  # Playing until no playable tiles (before passing)
-  defp play_until_no_playable_tiles(game) do
-    Game.play_random_tile(game)
-    |> play_until_no_playable_tiles(game)
-  end
-
-  defp play_until_no_playable_tiles({:ok, _, game}, _) do
-    play_until_no_playable_tiles(game)
-  end
-
-  defp play_until_no_playable_tiles({:error, error}, game) do
-    {:error, error, game}
-  end
-
-  # Playing or passing until round is over
-  defp play_until_round_over(game) do
-    Game.play_random_tile(game)
-    |> play_until_round_over(game)
-  end
-
-  defp play_until_round_over({:ok, game}, _) do
-    play_until_round_over(game)
-  end
-
-  defp play_until_round_over({:ok, _, game}, _) do
-    play_until_round_over(game)
-  end
-
-  defp play_until_round_over({:error, :round_over}, game) do
-    {:error, :round_over, game}
-  end
-
-  defp play_until_round_over({:error, :no_playable_tiles}, game) do
-    Game.take_from_boneyard(game)
-    |> play_until_round_over(game)
-  end
-
-  defp play_until_round_over({:error, :boneyard_empty}, game) do
-    Game.pass(game)
-    |> play_until_round_over(game)
   end
 
   defp tile_in_any_hand(hands, tile) do

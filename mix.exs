@@ -40,9 +40,9 @@ defmodule Boneyard.MixProject do
       {:jason, "~> 1.2"},
       {:phoenix, "~> 1.6.2"},
       {:phoenix_html, "~> 3.1"},
-      {:phoenix_live_dashboard, "~> 0.5"},
+      {:phoenix_live_dashboard, "~> 0.6"},
       {:phoenix_live_reload, "~> 1.3", only: :dev},
-      {:phoenix_live_view, "~> 0.16"},
+      {:phoenix_live_view, "~> 0.17"},
       {:plug_cowboy, "~> 2.5"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"}

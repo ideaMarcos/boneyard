@@ -30,7 +30,7 @@ defmodule Boneyard.Game do
       num_hands: num_hands,
       num_tiles_per_hand: num_tiles_per_hand,
       max_tile_val: max_tile_val,
-      scores: Enum.map(1..num_hands, fn _ -> 0 end),
+      scores: List.duplicate(0, num_hands),
       is_team: Keyword.get(options, :is_team, false),
       passing_bonus: Keyword.get(options, :passing_bonus, 0),
       capicú_bonus: Keyword.get(options, :capicú_bonus, 0),
@@ -103,21 +103,6 @@ defmodule Boneyard.Game do
       {:ok, new_game}
     else
       {:error, :must_use_playable_tiles}
-    end
-  end
-
-  def play_random_tile(%__MODULE__{is_round_over: true}) do
-    {:error, :round_over}
-  end
-
-  def play_random_tile(%__MODULE__{} = game) do
-    game
-    |> playable_tiles()
-    |> Enum.sort_by(&Tile.first_mover_sum/1)
-    |> List.last()
-    |> case do
-      nil -> {:error, :no_playable_tiles}
-      tile -> play_tile(game, tile.id)
     end
   end
 

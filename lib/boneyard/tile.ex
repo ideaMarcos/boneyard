@@ -39,8 +39,11 @@ defmodule Boneyard.Tile do
   def switch_sides(%__MODULE__{left_val: left_val, right_val: right_val} = tile),
     do: %{tile | right_val: left_val, left_val: right_val}
 
-  def left_tile === right_tile,
-    do: Kernel.===(left_tile.id, right_tile.id)
+  def a === b do
+    a = arrange(a)
+    b = arrange(b)
+    Kernel.===(a.left_val, b.left_val) and Kernel.===(a.right_val, b.right_val)
+  end
 
   def compare(%__MODULE__{id: id1}, %__MODULE__{id: id2}) do
     if id1 > id2 do
