@@ -35,7 +35,7 @@ defmodule Boneyard.Cpu do
   end
 
   # Playing until no playable tiles (before passing)
-  def play_until_no_playable_tiles(game) do
+  def play_until_no_playable_tiles(%Game{} = game) do
     play_best_tile(game)
     |> do_play_until_no_playable_tiles(game)
   end
@@ -49,7 +49,7 @@ defmodule Boneyard.Cpu do
   end
 
   # Playing or passing until round is over
-  def play_until_round_over(game) do
+  def play_until_round_over(%Game{} = game) do
     play_best_tile(game)
     |> do_play_until_round_over(game)
   end

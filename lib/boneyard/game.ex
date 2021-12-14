@@ -31,16 +31,25 @@ defmodule Boneyard.Game do
       num_tiles_per_hand: num_tiles_per_hand,
       max_tile_val: max_tile_val,
       scores: List.duplicate(0, num_hands),
+      is_game_over: false,
       is_team: Keyword.get(options, :is_team, false),
       passing_bonus: Keyword.get(options, :passing_bonus, 0),
       capicú_bonus: Keyword.get(options, :capicú_bonus, 0),
-      winning_score: Keyword.get(options, :winning_score, 0)
+      winning_score: Keyword.get(options, :winning_score, 100)
     }
     |> new_round()
   end
 
   def new(_, _, _, _) do
     {:error, :invalid_options}
+  end
+
+  def new_round(%__MODULE__{is_game_over: true}) do
+    {:error, :game_over}
+  end
+
+  def new_round(%__MODULE__{is_round_over: false}) do
+    {:error, :round_not_over}
   end
 
   def new_round(%__MODULE__{} = game) do
@@ -54,7 +63,6 @@ defmodule Boneyard.Game do
         hands: hands,
         line_of_play: [],
         is_round_over: false,
-        is_game_over: false,
         boneyard: boneyard,
         winning_player: nil
     }
@@ -104,6 +112,13 @@ defmodule Boneyard.Game do
     else
       {:error, :must_use_playable_tiles}
     end
+  end
+
+  defp compute_game_over(%__MODULE__{} = game) do
+    %{
+      game
+      | is_game_over: Enum.any?(game.scores, fn x -> x >= game.winning_score end)
+    }
   end
 
   def playable_tiles(%__MODULE__{} = game) do
@@ -295,7 +310,7 @@ defmodule Boneyard.Game do
     right_tile = List.last(game.line_of_play)
 
     cond do
-      !!last_tile and Tile.is_double(last_tile) ->
+      Tile.is_double(last_tile) ->
         0
 
       Enum.at(game.hands, winning_player) !== [] ->
@@ -333,10 +348,11 @@ defmodule Boneyard.Game do
 
     %{
       game
-      | scores: compute_scores(game, bonus_points, players),
-        active_player: nil,
+      | active_player: nil,
         winning_player: winning_player
     }
+    |> compute_scores(bonus_points, players)
+    |> compute_game_over()
   end
 
   defp score_previous_move(%__MODULE__{} = game, _last_tile)
@@ -351,10 +367,9 @@ defmodule Boneyard.Game do
           [game.active_player]
         end
 
-      %{
-        game
-        | scores: compute_scores(game, game.passing_bonus, players)
-      }
+      game
+      |> compute_scores(game.passing_bonus, players)
+      |> compute_game_over()
     else
       game
     end
@@ -365,9 +380,12 @@ defmodule Boneyard.Game do
   end
 
   defp compute_scores(%__MODULE__{} = game, bonus_points, players) do
-    game.scores
-    |> Enum.zip(0..length(game.hands))
-    |> Enum.map(fn {score, idx} -> compute_score(score, idx, bonus_points, players) end)
+    scores =
+      game.scores
+      |> Enum.zip(0..length(game.hands))
+      |> Enum.map(fn {score, idx} -> compute_score(score, idx, bonus_points, players) end)
+
+    %{game | scores: scores}
   end
 
   defp compute_score(score, idx, points, players) do

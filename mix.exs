@@ -38,7 +38,7 @@ defmodule Boneyard.MixProject do
       {:floki, ">= 0.30.0", only: :test},
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
-      {:phoenix, "~> 1.6.2"},
+      {:phoenix, "~> 1.6"},
       {:phoenix_html, "~> 3.1"},
       {:phoenix_live_dashboard, "~> 0.6"},
       {:phoenix_live_reload, "~> 1.3", only: :dev},

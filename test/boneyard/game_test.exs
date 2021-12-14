@@ -46,6 +46,25 @@ defmodule Boneyard.GameTest do
     end
   end
 
+  describe "Game.new_round/1" do
+    test "PASS when round is over", %{game_476: game1} do
+      assert {:error, :round_over, game2} = Cpu.play_until_round_over(game1)
+      assert game2.is_round_over === true
+      assert {:ok, game3} = Game.new_round(game2)
+      assert game3.is_round_over === false
+    end
+
+    test "FAIL game_over" do
+      {:ok, game1} = Game.new(4, 7, 6, winning_score: 1)
+      assert {:error, :round_over, game2} = Cpu.play_until_round_over(game1)
+      assert {:error, :game_over} = Game.new_round(game2)
+    end
+
+    test "FAIL round_not_over", %{game: game} do
+      assert {:error, :round_not_over} = Game.new_round(game)
+    end
+  end
+
   describe "Game.pass/1" do
     test "PASS when no playable tiles", %{game_476: game1} do
       assert {:error, :no_playable_tiles, game2} = Cpu.play_until_no_playable_tiles(game1)
@@ -223,8 +242,10 @@ defmodule Boneyard.GameTest do
       assert game4.is_round_over === false
       assert game5.is_round_over === false
       assert game6.is_round_over === false
+      assert game6.is_game_over === false
       assert Enum.all?(game6.scores, fn x -> x === 0 end)
       assert game7.is_round_over === true
+      assert game7.is_game_over === false
       assert Enum.sum(game7.scores) === 10
       assert Enum.at(game7.scores, game7.winning_player) === 10
       assert Enum.member?(game7.hands, []) === false
@@ -239,6 +260,7 @@ defmodule Boneyard.GameTest do
       assert {:ok, last_tile, game3} = Cpu.play_random_tile(game2)
       assert Tile.is_double(last_tile) === true
       assert game3.is_round_over === true
+      assert game3.is_game_over === false
       assert Enum.at(game3.hands, game3.winning_player) === []
     end
 
@@ -257,11 +279,12 @@ defmodule Boneyard.GameTest do
       assert {:ok, last_tile, game7} = Cpu.play_random_tile(game6)
       assert Tile.is_double(last_tile) === false
       assert game7.is_round_over === true
+      assert game7.is_game_over === false
       assert game7.last_player === game7.winning_player
       assert Enum.at(game7.hands, game7.winning_player) === []
     end
 
-    test "FAIL when player locks out others. GET passing_bonus if it bonus + player score < winning score",
+    test "FAIL when player locks out others. GET passing_bonus if it bonus + player_score < winning_score",
          %{game_476: game1} do
       game2 = %{
         game1
@@ -283,6 +306,7 @@ defmodule Boneyard.GameTest do
       assert game5.is_round_over === false
       assert Enum.all?(game5.scores, fn x -> x === 0 end)
       assert game6.is_round_over === false
+      assert game6.is_game_over === false
       assert Enum.sum(game6.scores) === game6.passing_bonus
       assert is_nil(game6.winning_player) === true
       assert Enum.at(game6.scores, game6.last_player) === game6.passing_bonus
@@ -305,6 +329,7 @@ defmodule Boneyard.GameTest do
       assert {:ok, game6} = Game.pass(game5)
 
       assert game6.is_round_over === false
+      assert game6.is_game_over === false
       assert game5.scores === game6.scores
     end
   end
