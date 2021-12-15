@@ -45,11 +45,25 @@ defmodule Boneyard.Tile do
     Kernel.===(a.left_val, b.left_val) and Kernel.===(a.right_val, b.right_val)
   end
 
-  def compare(%__MODULE__{id: id1}, %__MODULE__{id: id2}) do
-    if id1 > id2 do
-      :lt
-    else
-      :gt
+  def compare(%__MODULE__{} = left_tile, %__MODULE__{} = right_tile) do
+    left_tile = arrange(left_tile)
+    right_tile = arrange(right_tile)
+    do_compare(left_tile, right_tile)
+  end
+
+  defp do_compare(%__MODULE__{} = left_tile, %__MODULE__{} = right_tile) do
+    cond do
+      left_tile.left_val > right_tile.left_val ->
+        :lt
+
+      left_tile.left_val < right_tile.left_val ->
+        :gt
+
+      left_tile.right_val > right_tile.right_val ->
+        :lt
+
+      :otherwise ->
+        :gt
     end
   end
 
@@ -83,20 +97,24 @@ defmodule Boneyard.Tile do
     do: 0
 
   def winner_sums(tiles) when is_list(tiles) do
-    tiles = [new(0) | tiles]
     tiles_sum = scoring_sum(tiles)
-    lowest_tile = Enum.min_by(tiles, &scoring_sum/1)
+
+    lowest_tile =
+      tiles
+      |> Enum.min_by(&scoring_sum/1, fn -> 0 end)
+      |> scoring_sum()
 
     lowest_val =
       tiles
       |> Enum.flat_map(fn x -> [x.left_val, x.right_val] end)
-      |> Enum.min()
+      |> Enum.min(fn -> -1 end)
 
-    {tiles_sum, lowest_tile, lowest_val, tiles}
+    {tiles_sum, lowest_tile, lowest_val}
   end
 end
 
 defimpl String.Chars, for: Boneyard.Tile do
-  def to_string(%{left_val: left_val, right_val: right_val}),
-    do: "#{left_val}/#{right_val}"
+  def to_string(%{left_val: left_val, right_val: right_val}) do
+    "#{left_val}/#{right_val}"
+  end
 end

@@ -4,6 +4,8 @@ defmodule Boneyard.GameTest do
   alias Boneyard.Game
   alias Boneyard.Tile
 
+  doctest Game
+
   setup _ do
     num_hands = Enum.random(2..4)
     num_tiles_per_hand = Enum.random([5, 7])
