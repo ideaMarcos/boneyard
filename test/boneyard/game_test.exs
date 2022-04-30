@@ -32,9 +32,9 @@ defmodule Boneyard.GameTest do
 
       assert game.num_hands === num_hands
       assert length(game.hands) === game.num_hands
-      assert Enum.all?(game.hands, fn hand -> length(hand) === game.num_tiles_per_hand end)
+      assert for hand <- game.hands, do: assert(length(hand) === game.num_tiles_per_hand)
       assert length(game.scores) === game.num_hands
-      assert Enum.all?(game.scores, fn score -> score === 0 end)
+      assert for score <- game.scores, do: assert(score === 0)
       assert game.num_tiles_per_hand === num_tiles_per_hand
       assert game.max_tile_val === max_tile_val
       assert game.line_of_play === []
@@ -245,7 +245,7 @@ defmodule Boneyard.GameTest do
       assert game5.is_round_over === false
       assert game6.is_round_over === false
       assert game6.is_game_over === false
-      assert Enum.all?(game6.scores, fn x -> x === 0 end)
+      assert for score <- game6.scores, do: assert(score === 0)
       assert game7.is_round_over === true
       assert game7.is_game_over === false
       assert Enum.sum(game7.scores) === 10
@@ -306,7 +306,7 @@ defmodule Boneyard.GameTest do
       assert game3.is_round_over === false
       assert game4.is_round_over === false
       assert game5.is_round_over === false
-      assert Enum.all?(game5.scores, fn x -> x === 0 end)
+      assert for score <- game5.scores, do: assert(score === 0)
       assert game6.is_round_over === false
       assert game6.is_game_over === false
       assert Enum.sum(game6.scores) === game6.passing_bonus
