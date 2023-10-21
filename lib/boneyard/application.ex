@@ -8,14 +8,13 @@ defmodule Boneyard.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Telemetry supervisor
       BoneyardWeb.Telemetry,
-      # Start the PubSub system
+      {DNSCluster, query: Application.get_env(:boneyard, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Boneyard.PubSub},
-      # Start the Endpoint (http/https)
-      BoneyardWeb.Endpoint
       # Start a worker by calling: Boneyard.Worker.start_link(arg)
-      # {Boneyard.Worker, arg}
+      # {Boneyard.Worker, arg},
+      # Start to serve requests, typically the last entry
+      BoneyardWeb.Endpoint
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -20,3 +20,7 @@ iex(3)> Game.playable_tiles(game)
 iex(4)> {:ok, game} = Game.play_random_tile(game)
 
 ```
+
+## Random
+
+- `mix phx.new boneyard --no-ecto --no-mailer`

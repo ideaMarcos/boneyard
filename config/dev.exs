@@ -4,8 +4,8 @@ import Config
 # debugging and code reloading.
 #
 # The watchers configuration can be used to run external
-# watchers to your application. For example, we use it
-# with esbuild to bundle .js and .css sources.
+# watchers to your application. For example, we can use it
+# to bundle .js and .css sources.
 config :boneyard, BoneyardWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
@@ -13,10 +13,10 @@ config :boneyard, BoneyardWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "jlflfDL+TgHJUE3W44pJIbEqJvL0m/H0ZJlcSewMRNDE+YoWmJUnqoWqr4VHCfIl",
+  secret_key_base: "Q7AiASAw8UFBH4ExJXS/aGBg5rhbadGh3ZaIPWammXN3P2JrptUiCRfSlNeifsGO",
   watchers: [
-    # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
-    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
+    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
   ]
 
 # ## SSL Support
@@ -27,7 +27,6 @@ config :boneyard, BoneyardWeb.Endpoint,
 #
 #     mix phx.gen.cert
 #
-# Note that this task requires Erlang/OTP 20 or later.
 # Run `mix help phx.gen.cert` for more information.
 #
 # The `http:` config above can be replaced with:
@@ -49,10 +48,12 @@ config :boneyard, BoneyardWeb.Endpoint,
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/boneyard_web/(live|views)/.*(ex)$",
-      ~r"lib/boneyard_web/templates/.*(eex)$"
+      ~r"lib/boneyard_web/(controllers|live|components)/.*(ex|heex)$"
     ]
   ]
+
+# Enable dev routes for dashboard and mailbox
+config :boneyard, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
@@ -63,3 +64,6 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Include HEEx debug annotations as HTML comments in rendered markup
+config :phoenix_live_view, :debug_heex_annotations, true
