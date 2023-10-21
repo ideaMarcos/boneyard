@@ -33,7 +33,7 @@ defmodule Boneyard.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:dns_cluster, ">= 0.0.0", only: :test},
+      {:dns_cluster, ">= 0.0.0"},
       {:esbuild, ">= 0.0.0", runtime: Mix.env() == :dev},
       {:floki, ">= 0.0.0", only: :test},
       {:gettext, ">= 0.0.0"},
