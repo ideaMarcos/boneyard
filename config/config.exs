@@ -13,18 +13,18 @@ config :boneyard,
 # Configures the endpoint
 config :boneyard, BoneyardWeb.Endpoint,
   url: [host: "localhost"],
-  adapter: Phoenix.Endpoint.Cowboy2Adapter,
+  adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: BoneyardWeb.ErrorHTML, json: BoneyardWeb.ErrorJSON],
     layout: false
   ],
   pubsub_server: Boneyard.PubSub,
-  live_view: [signing_salt: "7okDeRBt"]
+  live_view: [signing_salt: "5eA+Eiep"]
 
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",
-  default: [
+  boneyard: [
     args:
       ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
@@ -33,8 +33,8 @@ config :esbuild,
 
 # Configure tailwind (the version is required)
 config :tailwind,
-  version: "3.3.2",
-  default: [
+  version: "3.4.3",
+  boneyard: [
     args: ~w(
       --config=tailwind.config.js
       --input=css/app.css

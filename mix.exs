@@ -5,7 +5,7 @@ defmodule Boneyard.MixProject do
     [
       app: :boneyard,
       version: "0.1.0",
-      elixir: ">= 1.15.0",
+      elixir: ">= 1.17.0",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -33,17 +33,24 @@ defmodule Boneyard.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:bandit, ">= 0.0.0"},
       {:dns_cluster, ">= 0.0.0"},
       {:esbuild, ">= 0.0.0", runtime: Mix.env() == :dev},
       {:floki, ">= 0.0.0", only: :test},
       {:gettext, ">= 0.0.0"},
+      {:heroicons,
+       github: "tailwindlabs/heroicons",
+       tag: "v2.1.1",
+       sparse: "optimized",
+       app: false,
+       compile: false,
+       depth: 1},
       {:jason, ">= 0.0.0"},
       {:phoenix, ">= 0.0.0"},
       {:phoenix_html, ">= 0.0.0"},
       {:phoenix_live_dashboard, ">= 0.0.0"},
       {:phoenix_live_reload, ">= 0.0.0", only: :dev},
       {:phoenix_live_view, ">= 0.0.0"},
-      {:plug_cowboy, ">= 0.0.0"},
       {:tailwind, ">= 0.0.0", runtime: Mix.env() == :dev},
       {:telemetry_metrics, ">= 0.0.0"},
       {:telemetry_poller, ">= 0.0.0"}
@@ -58,11 +65,14 @@ defmodule Boneyard.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      compile: ["compile --warnings-as-errors"],
       setup: ["deps.get", "assets.setup", "assets.build"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind default", "esbuild default"],
-      "assets.deploy": ["tailwind default --minify", "esbuild default --minify", "phx.digest"]
+      "assets.build": ["tailwind boneyard", "esbuild boneyard"],
+      "assets.deploy": [
+        "tailwind boneyard --minify",
+        "esbuild boneyard --minify",
+        "phx.digest"
+      ]
     ]
   end
 end

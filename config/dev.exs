@@ -13,10 +13,10 @@ config :boneyard, BoneyardWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "Q7AiASAw8UFBH4ExJXS/aGBg5rhbadGh3ZaIPWammXN3P2JrptUiCRfSlNeifsGO",
+  secret_key_base: "ZJi50cwFvJ5wFF4SueC0l425WaIDe02AJfk36+g4TQ3HCs8jwTQgJ/N6UcLPgy4v",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
+    esbuild: {Esbuild, :install_and_run, [:boneyard, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:boneyard, ~w(--watch)]}
   ]
 
 # ## SSL Support
@@ -46,7 +46,7 @@ config :boneyard, BoneyardWeb.Endpoint,
 config :boneyard, BoneyardWeb.Endpoint,
   live_reload: [
     patterns: [
-      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
       ~r"lib/boneyard_web/(controllers|live|components)/.*(ex|heex)$"
     ]
@@ -65,5 +65,8 @@ config :phoenix, :stacktrace_depth, 20
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
-# Include HEEx debug annotations as HTML comments in rendered markup
-config :phoenix_live_view, :debug_heex_annotations, true
+config :phoenix_live_view,
+  # Include HEEx debug annotations as HTML comments in rendered markup
+  debug_heex_annotations: true,
+  # Enable helpful, but potentially expensive runtime checks
+  enable_expensive_runtime_checks: true
