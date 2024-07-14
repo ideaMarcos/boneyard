@@ -1,5 +1,6 @@
 defmodule BoneyardWeb.Router do
   use BoneyardWeb, :router
+  import Phoenix.LiveView.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -18,6 +19,7 @@ defmodule BoneyardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/game", GameLive
   end
 
   # Other scopes may use custom stacks.
