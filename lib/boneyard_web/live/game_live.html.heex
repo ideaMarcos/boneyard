@@ -6,6 +6,7 @@
 <div>
   Scores <%= inspect(@game.scores) %>
 </div>
+<div>Hands</div>
 <div :for={{hand, index} <- Enum.with_index(@game.hands)}>
   <div class="grid grid-cols-9">
     <div class="flex justify-end">
@@ -16,18 +17,19 @@
         🏆
       <% end %>
     </div>
-    <div>Hand <%= 1 + index %>:</div>
+    <div><%= 1 + index %>:</div>
     <div :for={tile <- hand} :if={@game.active_player == index} class={tile_class(tile)}>
-      <button class="text-green-600"><%= "[#{tile}]" %></button>
+      <%= if is_playable_tile?(@game, tile) do %>
+        <button phx-click="play_tile" phx-value-id={tile.id} class="text-green-600">
+          <%= "[#{tile}]" %>
+        </button>
+      <% else %>
+        <%= "[#{tile}]" %>
+      <% end %>
     </div>
     <div :for={tile <- hand} :if={@game.active_player != index} class={tile_class(tile)}>
       <%= "[#{tile}]" %>
     </div>
-  </div>
-</div>
-<div :if={!!@game.active_player}>
-  <div class="shadow bg-white rounded-lg">
-    Playable tiles: <%= playable_tiles(@game) %>
   </div>
 </div>
 <div :if={!@game.is_round_over}>

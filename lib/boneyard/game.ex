@@ -134,6 +134,10 @@ defmodule Boneyard.Game do
     |> Enum.sort()
   end
 
+  def play_tile(%__MODULE__{} = game, tile_id) when is_binary(tile_id) do
+    play_tile(game, String.to_integer(tile_id))
+  end
+
   def play_tile(%__MODULE__{} = game, tile_id) when is_integer(tile_id) do
     case play_tile_on_left_side(game, tile_id) do
       {:error, _} ->

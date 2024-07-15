@@ -5,9 +5,8 @@ defmodule BoneyardWeb.GameLive do
   alias Boneyard.Cpu
   alias Boneyard.Game
 
-  defp playable_tiles(%Game{} = game) do
-    Game.playable_tiles(game)
-    |> print_tiles()
+  defp is_playable_tile?(%Game{} = game, %Tile{} = tile) do
+    tile in Game.playable_tiles(game)
   end
 
   defp tile_class(tile) do
@@ -66,5 +65,10 @@ defmodule BoneyardWeb.GameLive do
       {:error, :round_over, game} ->
         {:noreply, update(socket, :game, fn _ -> game end)}
     end
+  end
+
+  def handle_event("play_tile", %{"id" => tile_id}, socket) do
+    {:ok, _tile, game} = Game.play_tile(socket.assigns.game, tile_id)
+    {:noreply, update(socket, :game, fn _ -> game end)}
   end
 end
