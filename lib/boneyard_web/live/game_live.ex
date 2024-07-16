@@ -9,6 +9,10 @@ defmodule BoneyardWeb.GameLive do
     tile in Game.playable_tiles(game)
   end
 
+  defp has_playable_tiles?(%Game{} = game) do
+    Game.playable_tiles(game) != []
+  end
+
   defp tile_class(tile) do
     if Tile.is_double(tile) do
       "shadow"
@@ -69,6 +73,11 @@ defmodule BoneyardWeb.GameLive do
 
   def handle_event("play_tile", %{"id" => tile_id}, socket) do
     {:ok, _tile, game} = Game.play_tile(socket.assigns.game, tile_id)
+    {:noreply, update(socket, :game, fn _ -> game end)}
+  end
+
+  def handle_event("pass", _params, socket) do
+    {:ok, game} = Game.pass(socket.assigns.game)
     {:noreply, update(socket, :game, fn _ -> game end)}
   end
 end

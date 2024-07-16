@@ -8,7 +8,7 @@
 </div>
 <div>Hands</div>
 <div :for={{hand, index} <- Enum.with_index(@game.hands)}>
-  <div class="grid grid-cols-9">
+  <div class="grid grid-cols-10">
     <div class="flex justify-end">
       <%= if @game.active_player == index do %>
         👉🏼
@@ -29,6 +29,11 @@
     </div>
     <div :for={tile <- hand} :if={@game.active_player != index} class={tile_class(tile)}>
       <%= "[#{tile}]" %>
+    </div>
+    <div :if={@game.active_player == index && !has_playable_tiles?(@game)}>
+      <button phx-click="pass" class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white">
+        Pass
+      </button>
     </div>
   </div>
 </div>
