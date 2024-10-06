@@ -1,47 +1,58 @@
-<div>
-  <button phx-click="new_game" class="h-10 px-6 font-semibold rounded-md bg-black text-white">
-    New game
-  </button>
-</div>
-<div>
-  Scores <%= inspect(@game.scores) %>
-</div>
-<div>Hands</div>
-<div :for={{hand, index} <- Enum.with_index(@game.hands)}>
-  <div class="grid grid-cols-10">
-    <div class="flex justify-end">
-      <%= if @game.active_player == index do %>
-        👉🏼
-      <% end %>
-      <%= if @game.winning_player == index do %>
-        🏆
-      <% end %>
-    </div>
-    <div><%= 1 + index %>:</div>
-    <div :for={tile <- hand} :if={@game.active_player == index} class={tile_class(tile)}>
-      <%= if is_playable_tile?(@game, tile) do %>
-        <button phx-click="play_tile" phx-value-id={tile.id} class="text-green-600">
+<div :if={Game.ready?(@game)}>
+  <div>
+    Scores <%= inspect(@game.scores) %>
+  </div>
+  <div>Hands</div>
+  <div :for={{hand, index} <- Enum.with_index(@game.hands)}>
+    <div class="grid grid-cols-10">
+      <div class="flex justify-end">
+        <%= if @game.active_player == index do %>
+          👉🏼
+        <% end %>
+        <%= if @game.winning_player == index do %>
+          🏆
+        <% end %>
+      </div>
+      <div><%= 1 + index %>:</div>
+      <div :for={tile <- hand} :if={@game.active_player == index} class={tile_class(tile)}>
+        <%= if is_playable_tile?(@game, tile) do %>
+          <button phx-click="play_tile" phx-value-id={tile.id} class="text-green-600">
+            <%= "[#{tile}]" %>
+          </button>
+        <% else %>
           <%= "[#{tile}]" %>
-        </button>
-      <% else %>
+        <% end %>
+      </div>
+      <div :for={tile <- hand} :if={@game.active_player != index} class={tile_class(tile)}>
         <%= "[#{tile}]" %>
-      <% end %>
-    </div>
-    <div :for={tile <- hand} :if={@game.active_player != index} class={tile_class(tile)}>
-      <%= "[#{tile}]" %>
-    </div>
-    <div :if={@game.active_player == index && !has_playable_tiles?(@game)}>
-      <button phx-click="pass" class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white">
-        Pass
-      </button>
+      </div>
+      <div :if={@game.active_player == index && !has_playable_tiles?(@game)}>
+        <button
+          phx-click="pass"
+          class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+        >
+          Pass
+        </button>
+      </div>
     </div>
   </div>
+  <div :if={!@game.round_over?}>
+    <button
+      phx-click="finish_round"
+      class="h-10 px-6 font-semibold rounded-md bg-black text-white"
+    >
+      Finish Round
+    </button>
+  </div>
+  <div class="shadow bg-white rounded-lg">
+    Line of play: <%= print_tiles(@game.line_of_play) %>
+  </div>
 </div>
-<div :if={!@game.is_round_over}>
-  <button phx-click="finish_round" class="h-10 px-6 font-semibold rounded-md bg-black text-white">
-    Finish Round
-  </button>
-</div>
-<div class="shadow bg-white rounded-lg">
-  Line of play: <%= print_tiles(@game.line_of_play) %>
+<div :if={!Game.ready?(@game)}>
+  <div>
+    Waiting for <%= Game.open_hands(@game) %> more player(s).
+  </div>
+  <div>
+    Invite more players with the url <%= "http://localhost:4000/game/#{@game.id}/join" %>
+  </div>
 </div>

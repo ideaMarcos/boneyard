@@ -1,9 +1,10 @@
 # https://hexdocs.pm/phoenix_live_view/welcome.html
 defmodule BoneyardWeb.GameLive do
   use Phoenix.LiveView
-  alias Boneyard.Tile
   alias Boneyard.Cpu
   alias Boneyard.Game
+  alias Boneyard.GameServer
+  alias Boneyard.Tile
 
   defp is_playable_tile?(%Game{} = game, %Tile{} = tile) do
     tile in Game.playable_tiles(game)
@@ -34,30 +35,11 @@ defmodule BoneyardWeb.GameLive do
     ["[", list, "]"]
   end
 
-  def mount(_params, _session, socket) do
-    {:ok, game} = Game.new(4, 7, 6)
+  def mount(params, _session, socket) do
+    game_id = Map.get(params, "id")
+    _code = Map.get(params, "code")
+    {:ok, game} = GameServer.get_game(game_id)
     {:ok, assign(socket, :game, game)}
-  end
-
-  def handle_event("new_game", _params, socket) do
-    game =
-      socket.assigns.game
-
-    new_game =
-      cond do
-        game && game.is_round_over ->
-          {:ok, game} = Game.new_round(game)
-          game
-
-        game ->
-          game
-
-        true ->
-          {:ok, game} = Game.new(4, 7, 6)
-          game
-      end
-
-    {:noreply, update(socket, :game, fn _ -> new_game end)}
   end
 
   def handle_event("finish_round", _params, socket) do

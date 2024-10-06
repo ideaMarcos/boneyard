@@ -1,54 +1,114 @@
 defmodule Boneyard.Game do
+  require Logger
   alias Boneyard.Tile
 
-  defstruct num_hands: nil,
+  defstruct id: nil,
+            num_hands: nil,
             num_tiles_per_hand: nil,
             max_tile_val: nil,
             hands: nil,
             line_of_play: nil,
             active_player: nil,
-            is_round_over: nil,
-            is_game_over: nil,
+            round_over?: nil,
+            game_over?: nil,
             last_player: nil,
             winning_player: nil,
             boneyard: nil,
             scores: nil,
-            is_team: nil,
+            team?: nil,
             passing_bonus: nil,
             capicú_bonus: nil,
-            winning_score: nil
+            winning_score: nil,
+            player_codes: nil,
+            player_names: nil
 
-  def new(num_hands, num_tiles_per_hand, max_tile_val, options \\ [])
+  def new(game_id, options \\ []) do
+    num_hands = Keyword.get(options, :num_hands, 2)
 
-  def new(num_hands, 7 = _num_tiles_per_hand, 6 = _max_tile_val, _) when num_hands > 4 do
-    {:error, :not_enough_tiles}
-  end
-
-  def new(num_hands, num_tiles_per_hand, max_tile_val, options)
-      when num_hands in 2..6 and num_tiles_per_hand in [5, 7] and max_tile_val in [6, 9] do
     %__MODULE__{
+      id: game_id,
       num_hands: num_hands,
-      num_tiles_per_hand: num_tiles_per_hand,
-      max_tile_val: max_tile_val,
+      num_tiles_per_hand: Keyword.get(options, :num_tiles_per_hand, 7),
+      max_tile_val: Keyword.get(options, :max_tile_val, 6),
       scores: List.duplicate(0, num_hands),
-      is_game_over: false,
-      is_team: Keyword.get(options, :is_team, false),
+      game_over?: false,
+      team?: Keyword.get(options, :team?, false),
       passing_bonus: Keyword.get(options, :passing_bonus, 0),
       capicú_bonus: Keyword.get(options, :capicú_bonus, 0),
-      winning_score: Keyword.get(options, :winning_score, 100)
+      winning_score: Keyword.get(options, :winning_score, 100),
+      player_codes: [],
+      player_names: []
     }
-    |> new_round()
+    |> validate()
   end
 
-  def new(_, _, _, _) do
-    {:error, :invalid_options}
+  def set_options(%__MODULE__{} = game, options) do
+    %{
+      game
+      | num_hands: Keyword.get(options, :num_hands, game.num_hands),
+        num_tiles_per_hand: Keyword.get(options, :num_tiles_per_hand, game.num_tiles_per_hand),
+        max_tile_val: Keyword.get(options, :max_tile_val, game.max_tile_val),
+        team?: Keyword.get(options, :team?, game.team?),
+        passing_bonus: Keyword.get(options, :passing_bonus, game.passing_bonus),
+        capicú_bonus: Keyword.get(options, :capicú_bonus, game.capicú_bonus),
+        winning_score: Keyword.get(options, :winning_score, game.winning_score)
+    }
+    |> validate()
+
+    # |> start_round()
   end
 
-  def new_round(%__MODULE__{is_game_over: true}) do
+  def validate(
+        %__MODULE__{
+          num_hands: num_hands,
+          num_tiles_per_hand: num_tiles_per_hand,
+          max_tile_val: max_tile_val
+        } = game
+      ) do
+    cond do
+      # num_hands > 4 and num_tiles_per_hand == 7 and max_tile_val == 6 ->
+      (max_tile_val + 1) * (max_tile_val + 2) / 2 < num_hands * num_tiles_per_hand ->
+        {:error, "not enough tiles"}
+
+      num_hands not in 2..6 ->
+        {:error, "num_hands should be between 2 and 6"}
+
+      num_tiles_per_hand not in [5, 7] ->
+        {:error, "num_tiles_per_hand should be 5 or 7"}
+
+      max_tile_val not in [6, 9] ->
+        {:error, "max_tile_val should be 6 or 9"}
+
+      true ->
+        {:ok, game}
+    end
+  end
+
+  # https://github.com/elixir-plug/plug/blob/v1.16.1/lib/plug/request_id.ex#L81
+  def new_game_id do
+    binary = <<
+      System.system_time(:nanosecond)::64,
+      :erlang.phash2({node(), self()}, 16_777_216)::24,
+      :erlang.unique_integer()::32
+    >>
+
+    Base.encode32(binary)
+  end
+
+  def start_round({:ok, %__MODULE__{id: id} = game}) do
+    Logger.info("starting new game", id: id)
+    new_round(game)
+  end
+
+  def start_round({:error, error}) do
+    {:error, error}
+  end
+
+  def new_round(%__MODULE__{game_over?: true}) do
     {:error, :game_over}
   end
 
-  def new_round(%__MODULE__{is_round_over: false}) do
+  def new_round(%__MODULE__{round_over?: false}) do
     {:error, :round_not_over}
   end
 
@@ -62,7 +122,7 @@ defmodule Boneyard.Game do
       | active_player: game.active_player || hand_with_highest_double_or_tile(hands),
         hands: hands,
         line_of_play: [],
-        is_round_over: false,
+        round_over?: false,
         boneyard: boneyard,
         winning_player: nil
     }
@@ -90,7 +150,7 @@ defmodule Boneyard.Game do
     end
   end
 
-  def pass(%__MODULE__{is_round_over: true}) do
+  def pass(%__MODULE__{round_over?: true}) do
     {:error, :round_over}
   end
 
@@ -104,7 +164,7 @@ defmodule Boneyard.Game do
         %{
           game
           | active_player: next_active_player(game),
-            is_round_over: game.last_player === game.active_player
+            round_over?: game.last_player === game.active_player
         }
         |> score_previous_move(nil)
 
@@ -117,7 +177,7 @@ defmodule Boneyard.Game do
   defp compute_game_over(%__MODULE__{} = game) do
     %{
       game
-      | is_game_over: Enum.any?(game.scores, fn x -> x >= game.winning_score end)
+      | game_over?: Enum.any?(game.scores, fn x -> x >= game.winning_score end)
     }
   end
 
@@ -156,7 +216,7 @@ defmodule Boneyard.Game do
     do_play_tile(%__MODULE__{} = game, :left_side, tile_id)
   end
 
-  defp do_play_tile(%__MODULE__{is_round_over: true}, _, _) do
+  defp do_play_tile(%__MODULE__{round_over?: true}, _, _) do
     {:error, :round_over}
   end
 
@@ -171,7 +231,7 @@ defmodule Boneyard.Game do
           | active_player: next_active_player(game),
             hands: new_hands,
             line_of_play: add_tile_to_line(side, game.line_of_play, tile),
-            is_round_over: Enum.member?(new_hands, []),
+            round_over?: Enum.member?(new_hands, []),
             last_player: game.active_player
         }
         |> score_previous_move(tile)
@@ -328,7 +388,7 @@ defmodule Boneyard.Game do
     end
   end
 
-  defp score_previous_move(%__MODULE__{is_round_over: true} = game, last_tile) do
+  defp score_previous_move(%__MODULE__{round_over?: true} = game, last_tile) do
     winning_player =
       game.hands
       |> Enum.map(&Tile.winner_sums/1)
@@ -337,7 +397,7 @@ defmodule Boneyard.Game do
       |> elem(1)
 
     players =
-      if game.is_team do
+      if game.team? do
         [winning_player, teammate(winning_player, game.num_hands)]
       else
         [winning_player]
@@ -365,7 +425,7 @@ defmodule Boneyard.Game do
 
     if playable_tiles(game) !== [] and potential_score < game.winning_score do
       players =
-        if game.is_team do
+        if game.team? do
           [game.active_player, teammate(game.active_player, game.num_hands)]
         else
           [game.active_player]
@@ -402,5 +462,32 @@ defmodule Boneyard.Game do
 
   defp teammate(player, num_hands) do
     rem(player + rem(num_hands, 2), num_hands)
+  end
+
+  def ready?(%__MODULE__{} = game) do
+    length(game.player_names) == game.num_hands
+  end
+
+  def open_hands(%__MODULE__{} = game) do
+    game.num_hands - length(game.player_names)
+  end
+
+  def add_player(%__MODULE__{} = game, name, code) do
+    cond do
+      name in game.player_names ->
+        {:error, :name_taken}
+
+      code in game.player_codes ->
+        {:error, :code_taken}
+
+      length(game.player_names) < game.num_hands ->
+        {:ok,
+         game
+         |> Map.update!(:player_names, &[name | &1])
+         |> Map.update!(:player_codes, &[code | &1])}
+
+      true ->
+        {:error, :too_many_players}
+    end
   end
 end

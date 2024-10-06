@@ -9,17 +9,19 @@ defmodule BoneyardWeb.Router do
     plug :put_root_layout, html: {BoneyardWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug Plug.RequestId
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug Plug.RequestId
   end
 
   scope "/", BoneyardWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-    live "/game", GameLive
+    live "/", HomeLive
+    live "/game/:id/:code", GameLive
   end
 
   # Other scopes may use custom stacks.

@@ -2,7 +2,7 @@ defmodule Boneyard.Cpu do
   alias Boneyard.Game
   alias Boneyard.Tile
 
-  def play_random_tile(%Game{is_round_over: true}) do
+  def play_random_tile(%Game{round_over?: true}) do
     {:error, :round_over}
   end
 
@@ -19,7 +19,7 @@ defmodule Boneyard.Cpu do
     end
   end
 
-  def play_best_tile(%Game{is_round_over: true}) do
+  def play_best_tile(%Game{round_over?: true}) do
     {:error, :round_over}
   end
 
