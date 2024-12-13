@@ -32,6 +32,8 @@ defmodule Boneyard.Game do
       max_tile_val: Keyword.get(options, :max_tile_val, 6),
       scores: List.duplicate(0, num_hands),
       game_over?: false,
+      last_player: -1,
+      winning_player: -1,
       team?: Keyword.get(options, :team?, false),
       passing_bonus: Keyword.get(options, :passing_bonus, 0),
       capicú_bonus: Keyword.get(options, :capicú_bonus, 0),
@@ -96,8 +98,12 @@ defmodule Boneyard.Game do
   end
 
   def start_round({:ok, %__MODULE__{id: id} = game}) do
-    Logger.info("starting new game", id: id)
-    new_round(game)
+    if length(game.player_names) == game.num_hands do
+      Logger.info("starting new game", id: id)
+      new_round(game)
+    else
+      {:ok, game}
+    end
   end
 
   def start_round({:error, error}) do
@@ -123,7 +129,7 @@ defmodule Boneyard.Game do
         hands: hands,
         line_of_play: [],
         round_over?: false,
-        boneyard: boneyard,
+        boneyard: Enum.shuffle(boneyard),
         winning_player: nil
     }
 
@@ -136,7 +142,7 @@ defmodule Boneyard.Game do
 
   def take_from_boneyard(%__MODULE__{} = game) do
     if playable_tiles(game) === [] do
-      [tile | rest] = game.boneyard
+      [tile | rest] = Enum.shuffle(game.boneyard)
 
       new_game = %{
         game
@@ -180,6 +186,10 @@ defmodule Boneyard.Game do
       | game_over?: Enum.any?(game.scores, fn x -> x >= game.winning_score end)
     }
   end
+
+  def playable_tiles(%__MODULE__{game_over?: true}), do: []
+
+  def playable_tiles(%__MODULE__{round_over?: true}), do: []
 
   def playable_tiles(%__MODULE__{} = game) do
     left_tile = List.first(game.line_of_play)
@@ -485,6 +495,7 @@ defmodule Boneyard.Game do
          game
          |> Map.update!(:player_names, &[name | &1])
          |> Map.update!(:player_codes, &[code | &1])}
+        |> start_round()
 
       true ->
         {:error, :too_many_players}

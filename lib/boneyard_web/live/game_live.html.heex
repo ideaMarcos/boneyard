@@ -14,7 +14,7 @@
         <% end %>
       </div>
       <div><%= 1 + index %>:</div>
-      <div :for={tile <- hand} :if={@game.active_player == index} class={tile_class(tile)}>
+      <div :for={tile <- hand} :if={@player_index == index} class={tile_class(tile)}>
         <%= if is_playable_tile?(@game, tile) do %>
           <button phx-click="play_tile" phx-value-id={tile.id} class="text-green-600">
             <%= "[#{tile}]" %>
@@ -23,11 +23,21 @@
           <%= "[#{tile}]" %>
         <% end %>
       </div>
-      <div :for={tile <- hand} :if={@game.active_player != index} class={tile_class(tile)}>
-        <%= "[#{tile}]" %>
+      <div :for={tile <- hand} :if={@player_index != index} class={tile_class(tile)}>
+        [_/_]
       </div>
-      <div :if={@game.active_player == index && !has_playable_tiles?(@game)}>
+      <div :if={
+        @game.active_player == index && @player_index == index && !has_playable_tiles?(@game)
+      }>
         <button
+          :if={can_take_from_boneyard?(@game)}
+          phx-click="take_from_boneyard"
+          class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+        >
+          Boneyard
+        </button>
+        <button
+          :if={!can_take_from_boneyard?(@game)}
           phx-click="pass"
           class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
         >
@@ -53,6 +63,6 @@
     Waiting for <%= Game.open_hands(@game) %> more player(s).
   </div>
   <div>
-    Invite more players with the url <%= "http://localhost:4000/game/#{@game.id}/join" %>
+    Invite more players with the url <%= "http://localhost:4000/game/join/#{@game.id}" %>
   </div>
 </div>

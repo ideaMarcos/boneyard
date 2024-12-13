@@ -21,7 +21,8 @@ defmodule BoneyardWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive
-    live "/game/:id/:code", GameLive
+    get "/game/join/:id", GameController, :join
+    live "/game/:id/:player_code", GameLive
   end
 
   # Other scopes may use custom stacks.

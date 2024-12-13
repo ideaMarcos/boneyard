@@ -9,9 +9,30 @@ defmodule Boneyard.GameServer do
   end
 
   def add_player(game_id, name) do
-    with {:ok, code, players} <- call_by_name(game_id, {:add_player, name}),
-         :ok <- broadcast_players_updated!(game_id, players) do
+    with {:ok, code, game} <- call_by_name(game_id, {:add_player, name}),
+         :ok <- broadcast_players_updated!(game_id, game) do
       {:ok, code}
+    end
+  end
+
+  def play_tile(game_id, tile_id) do
+    with {:ok, tile, game} <- call_by_name(game_id, {:play_tile, tile_id}),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, tile, game}
+    end
+  end
+
+  def pass(game_id) do
+    with {:ok, game} <- call_by_name(game_id, :pass),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, game}
+    end
+  end
+
+  def take_from_boneyard(game_id) do
+    with {:ok, tile, game} <- call_by_name(game_id, :take_from_boneyard),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, tile, game}
     end
   end
 
@@ -40,13 +61,49 @@ defmodule Boneyard.GameServer do
   @impl GenServer
   def handle_call({:add_player, name}, _from, state) do
     name = name |> String.trim() |> String.downcase()
-    code = Enum.take_random(?A..?Z, 5)
 
-    case Game.add_player(state.game, name, code) |> IO.inspect() do
+    code =
+      Enum.take_random(?A..?Z, 5)
+      |> to_string()
+
+    case Game.add_player(state.game, name, code) do
       {:ok, game} ->
-        {:reply, {:ok, code, game.player_names}, %{state | game: game}}
+        {:reply, {:ok, code, game}, %{state | game: game}}
 
       {:error, :name_taken} = error ->
+        {:reply, error, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_call({:play_tile, tile_id}, _from, state) do
+    case Game.play_tile(state.game, tile_id) do
+      {:ok, tile, game} ->
+        {:reply, {:ok, tile, game}, %{state | game: game}}
+
+      {:error, _reason} = error ->
+        {:reply, error, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_call(:take_from_boneyard, _from, state) do
+    case Game.take_from_boneyard(state.game) do
+      {:ok, tile, game} ->
+        {:reply, {:ok, tile, game}, %{state | game: game}}
+
+      {:error, _reason} = error ->
+        {:reply, error, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_call(:pass, _from, state) do
+    case Game.pass(state.game) do
+      {:ok, game} ->
+        {:reply, {:ok, game}, %{state | game: game}}
+
+      {:error, _reason} = error ->
         {:reply, error, state}
     end
   end
@@ -76,8 +133,12 @@ defmodule Boneyard.GameServer do
   #   end
   # end
 
-  defp broadcast_players_updated!(game_id, players) do
-    broadcast!(to_string(game_id), :players_updated, players)
+  defp broadcast_players_updated!(game_id, game) do
+    broadcast!(to_string(game_id), :players_updated, game)
+  end
+
+  defp broadcast_game_updated!(game_id, game) do
+    broadcast!(to_string(game_id), :game_updated, game)
   end
 
   defp via_tuple(game_id) do
