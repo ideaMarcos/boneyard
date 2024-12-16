@@ -118,3 +118,7 @@ defimpl String.Chars, for: Boneyard.Tile do
     "#{left_val}/#{right_val}"
   end
 end
+
+defimpl Phoenix.HTML.Safe, for: Boneyard.Tile do
+  def to_iodata(data), do: Phoenix.HTML.Engine.html_escape(to_string(data))
+end

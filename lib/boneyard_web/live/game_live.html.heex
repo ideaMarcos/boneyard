@@ -1,6 +1,7 @@
 <div :if={Game.ready?(@game)}>
-  <div>
-    Scores <%= inspect(@game.scores) %>
+  <div>Scores</div>
+  <div :for={{score, index} <- Enum.with_index(@game.scores)}>
+    <div>{1 + index}: {score}</div>
   </div>
   <div>Hands</div>
   <div :for={{hand, index} <- Enum.with_index(@game.hands)}>
@@ -13,14 +14,14 @@
           🏆
         <% end %>
       </div>
-      <div><%= 1 + index %>:</div>
+      <div>{1 + index}:</div>
       <div :for={tile <- hand} :if={@player_index == index} class={tile_class(tile)}>
         <%= if is_playable_tile?(@game, tile) do %>
           <button phx-click="play_tile" phx-value-id={tile.id} class="text-green-600">
-            <%= "[#{tile}]" %>
+            [{tile}]
           </button>
         <% else %>
-          <%= "[#{tile}]" %>
+          [{tile}]
         <% end %>
       </div>
       <div :for={tile <- hand} :if={@player_index != index} class={tile_class(tile)}>
@@ -55,14 +56,14 @@
     </button>
   </div>
   <div class="shadow bg-white rounded-lg">
-    Line of play: <%= print_tiles(@game.line_of_play) %>
+    Line of play: {print_tiles(@game.line_of_play)}
   </div>
 </div>
 <div :if={!Game.ready?(@game)}>
   <div>
-    Waiting for <%= Game.open_hands(@game) %> more player(s).
+    Waiting for {Game.open_hands(@game)} more player(s).
   </div>
   <div>
-    Invite more players with the url <%= "http://localhost:4000/game/join/#{@game.id}" %>
+    Invite more players with the url {"http://localhost:4000/game/join/#{@game.id}"}
   </div>
 </div>

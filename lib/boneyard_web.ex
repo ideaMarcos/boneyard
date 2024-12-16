@@ -42,8 +42,9 @@ defmodule BoneyardWeb do
         formats: [:html, :json],
         layouts: [html: BoneyardWeb.Layouts]
 
+      use Gettext, backend: BoneyardWeb.Gettext
+
       import Plug.Conn
-      import BoneyardWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -81,11 +82,13 @@ defmodule BoneyardWeb do
 
   defp html_helpers do
     quote do
+      # Translation
+      use Gettext, backend: BoneyardWeb.Gettext
+
       # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components and translation
+      # Core UI components
       import BoneyardWeb.CoreComponents
-      import BoneyardWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

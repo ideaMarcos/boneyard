@@ -50,7 +50,7 @@ defmodule Boneyard.MixProject do
       {:phoenix_html, ">= 0.0.0"},
       {:phoenix_live_dashboard, ">= 0.0.0"},
       {:phoenix_live_reload, ">= 0.0.0", only: :dev},
-      {:phoenix_live_view, "~> 1.0.0-rc.6", override: true},
+      {:phoenix_live_view, ">= 1.0.0"},
       {:tailwind, ">= 0.0.0", runtime: Mix.env() == :dev},
       {:telemetry_metrics, ">= 0.0.0"},
       {:telemetry_poller, ">= 0.0.0"}
