@@ -1,62 +1,83 @@
-<div :if={Game.ready?(@game)}>
-  <div>Scores</div>
-  <div :for={{score, index} <- Enum.with_index(@game.scores)}>
-    <div>{1 + index}: {score}</div>
+<div :if={Game.ready?(@game)} class="container mx-auto px-4 py-8">
+  <div class="scores-container">
+    <div class="section-title-light">Scores</div>
+    <div :for={{score, index} <- Enum.with_index(@game.scores)} class="grid grid-cols-2 gap-4">
+      <div>{1 + index}: {score}</div>
+    </div>
   </div>
-  <div>Hands</div>
-  <div :for={{hand, index} <- Enum.with_index(@game.hands)}>
-    <div class="grid grid-cols-10">
-      <div class="flex justify-end">
-        <%= if @game.active_player == index do %>
-          👉🏼
-        <% end %>
-        <%= if @game.winning_player == index do %>
-          🏆
-        <% end %>
-      </div>
-      <div>{1 + index}:</div>
-      <div :for={tile <- hand} :if={@player_index == index} class={tile_class(tile)}>
-        <%= if is_playable_tile?(@game, tile) do %>
-          <button phx-click="play_tile" phx-value-id={tile.id} class="text-green-600">
-            [{tile}]
+
+  <div class="section-title">Hands</div>
+
+  <div :for={{hand, index} <- Enum.with_index(@game.hands)} class={hand_class(@game, index)}>
+    <div class="flex items-center gap-4">
+      <div class="font-bold">{1 + index}:</div>
+      <div class="flex flex-wrap gap-2">
+        <div
+          :for={tile <- hand}
+          :if={@player_index == index && is_playable_tile?(@game, tile)}
+          class="domino domino-button"
+        >
+          <button phx-click="play_tile" phx-value-id={tile.id} class="domino-half">
+            {tile.right_val}
           </button>
-        <% else %>
-          [{tile}]
-        <% end %>
-      </div>
-      <div :for={tile <- hand} :if={@player_index != index} class={tile_class(tile)}>
-        [_/_]
-      </div>
-      <div :if={
-        @game.active_player == index && @player_index == index && !has_playable_tiles?(@game)
-      }>
-        <button
-          :if={can_take_from_boneyard?(@game)}
-          phx-click="take_from_boneyard"
-          class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+          <div class="domino-divider"></div>
+          <button phx-click="play_tile" phx-value-id={tile.id} class="domino-half">
+            {tile.left_val}
+          </button>
+        </div>
+        <div
+          :for={tile <- hand}
+          :if={@player_index == index && !is_playable_tile?(@game, tile)}
+          class="domino"
         >
-          Boneyard
-        </button>
-        <button
-          :if={!can_take_from_boneyard?(@game)}
-          phx-click="pass"
-          class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
-        >
-          Pass
-        </button>
+          <div class="domino-half">{tile.right_val}</div>
+          <div class="domino-divider"></div>
+          <div class="domino-half">{tile.left_val}</div>
+        </div>
+        <div :for={_tile <- hand} :if={@player_index != index} class="domino">
+          <div class="domino-half">?</div>
+          <div class="domino-divider"></div>
+          <div class="domino-half">?</div>
+        </div>
+
+        <div :if={
+          @game.active_player == index && @player_index == index && !has_playable_tiles?(@game)
+        }>
+          <button
+            :if={can_take_from_boneyard?(@game)}
+            phx-click="take_from_boneyard"
+            class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+          >
+            Boneyard
+          </button>
+          <button
+            :if={!can_take_from_boneyard?(@game)}
+            phx-click="pass"
+            class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+          >
+            Pass
+          </button>
+        </div>
       </div>
     </div>
   </div>
-  <div :if={!@game.round_over?}>
-    <button
+
+  <%!-- <button
+    :if={!@game.round_over?}
       phx-click="finish_round"
-      class="h-10 px-6 font-semibold rounded-md bg-black text-white"
+      class="finish-round-button"
     >
       Finish Round
-    </button>
-  </div>
-  <div class="shadow bg-white rounded-lg">
-    Line of play: {print_tiles(@game.line_of_play)}
+    </button> --%>
+  <div class="section-title">Line of Play</div>
+  <div class="line-of-play">
+    <div class="flex flex-wrap gap-2 items-center">
+      <div :for={tile <- @game.line_of_play} class={tile_class(tile)}>
+        <div class="domino-half">{tile.left_val}</div>
+        <div class="domino-divider"></div>
+        <div class="domino-half">{tile.right_val}</div>
+      </div>
+    </div>
   </div>
 </div>
 <div :if={!Game.ready?(@game)}>

@@ -24,23 +24,18 @@ defmodule BoneyardWeb.GameLive do
 
   defp tile_class(tile) do
     if Tile.is_double(tile) do
-      "shadow"
+      "domino"
     else
-      "shadow"
+      "domino horizontal"
     end
   end
 
-  defp print_tiles([] = _tiles) do
-    ""
-  end
-
-  defp print_tiles(tiles) do
-    list =
-      tiles
-      |> Enum.map(fn x -> to_string(x) end)
-      |> Enum.join("] [")
-
-    ["[", list, "]"]
+  defp hand_class(%Game{} = game, hand_index) do
+    if game.active_player == hand_index do
+      "player-hand active"
+    else
+      "player-hand"
+    end
   end
 
   def mount(params, _session, socket) do

@@ -3,3 +3,168 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+:root {
+    --bg-dark: #1a1a1a;
+    --bg-light: #ffffff;
+    --text-dark: #000000;
+    --text-light: #ffffff;
+    --accent-playable: #006400;
+    /* Dark green for better contrast */
+    --border-dark: #000000;
+    --divider-color: #000000;
+    --font-size-base: 24px;
+    /* Add standard font size */
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    font-size: var(--font-size-base);
+}
+
+.domino {
+    display: flex;
+    flex-direction: column;
+    width: 60px;
+    height: 100px;
+    background: var(--bg-light);
+    border: 2px solid var(--border-dark);
+    border-radius: 8px;
+    margin: 5px;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.domino.horizontal {
+    flex-direction: row;
+    width: 100px;
+    height: 60px;
+}
+
+.domino.horizontal .domino-divider {
+    width: 2px;
+    height: auto;
+    margin: 5px 0;
+}
+
+.domino-half {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    font-size: var(--font-size-base);
+    /* Updated */
+    font-weight: bold;
+    color: var(--text-dark);
+}
+
+.domino-divider {
+    height: 2px;
+    background-color: var(--divider-color);
+    margin: 0 5px;
+}
+
+.domino-button {
+    cursor: pointer;
+    transition: transform 0.2s;
+    background-color: var(--accent-playable);
+    border-color: var(--border-dark);
+}
+
+.domino-button .domino-half {
+    color: var(--text-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    background: none;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    font-size: var(--font-size-base);
+    /* Updated */
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.domino-button .domino-half:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.domino-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 3px 8px 8px rgba(0, 0, 0, 0.4);
+}
+
+.line-of-play {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px;
+    background: #e0e0e0;
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 2px solid var(--border-dark);
+}
+
+.player-hand {
+    padding: 15px;
+    background: #e0e0e0;
+    border-radius: 12px;
+    margin: 10px 0;
+    border: 2px solid var(--border-dark);
+}
+
+.player-hand.active {
+    background: #c8e6c9;
+    /* Light green background for active player */
+    border: 2px solid var(--accent-playable);
+    /* Green border */
+    box-shadow: 0 0 10px rgba(0, 100, 0, 0.2);
+    /* Subtle green glow */
+}
+
+.scores-container {
+    background: var(--bg-dark);
+    color: var(--text-light);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.hidden-tiles {
+    color: #404040;
+    font-style: italic;
+    background-color: #d3d3d3;
+}
+
+.finish-round-button {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    font-size: var(--font-size-base);
+    /* Updated */
+}
+
+.finish-round-button:hover {
+    background-color: #333333;
+}
+
+.section-title {
+    color: var(--text-dark);
+    font-weight: bold;
+    font-size: var(--font-size-base);
+    /* Updated */
+    margin-bottom: 1rem;
+}
+
+.section-title-light {
+    color: var(--text-light);
+    font-weight: bold;
+    font-size: var(--font-size-base);
+    /* Updated */
+    margin-bottom: 1rem;
+}
