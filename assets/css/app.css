@@ -168,3 +168,24 @@ body {
     /* Updated */
     margin-bottom: 1rem;
 }
+
+/* Add these new classes */
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+}
+
+.player-name {
+  font-weight: bold;
+  color: var(--text-dark);
+}
+
+.player-score {
+  color: var(--text-dark);
+  opacity: 0.8;
+}

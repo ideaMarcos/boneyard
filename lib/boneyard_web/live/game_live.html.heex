@@ -1,90 +1,110 @@
-<div :if={Game.ready?(@game)} class="container mx-auto px-4 py-8">
-  <div class="scores-container">
-    <div class="section-title-light">Scores</div>
-    <div :for={{score, index} <- Enum.with_index(@game.scores)} class="grid grid-cols-2 gap-4">
-      <div>{1 + index}: {score}</div>
+<div :if={Game.ready?(@game)} class="container mx-auto px-4 py-8" role="main">
+  <div class="mb-4 flex justify-between items-center">
+    <h1 class="text-lg font-bold">
+      Game {@game.id}
+    </h1>
+    <div class="text-sm" aria-live="polite">
+      Boneyard: {length(@game.boneyard)} tiles remaining
     </div>
   </div>
 
-  <div class="section-title">Hands</div>
+  <h2 class="section-title">Hands</h2>
 
-  <div :for={{hand, index} <- Enum.with_index(@game.hands)} class={hand_class(@game, index)}>
-    <div class="flex items-center gap-4">
-      <div class="font-bold">{1 + index}:</div>
-      <div class="flex flex-wrap gap-2">
-        <div
-          :for={tile <- hand}
-          :if={@player_index == index && is_playable_tile?(@game, tile)}
-          class="domino domino-button"
-        >
-          <button phx-click="play_tile" phx-value-id={tile.id} class="domino-half">
-            {tile.right_val}
-          </button>
-          <div class="domino-divider"></div>
-          <button phx-click="play_tile" phx-value-id={tile.id} class="domino-half">
-            {tile.left_val}
-          </button>
-        </div>
-        <div
-          :for={tile <- hand}
-          :if={@player_index == index && !is_playable_tile?(@game, tile)}
-          class="domino"
-        >
-          <div class="domino-half">{tile.right_val}</div>
-          <div class="domino-divider"></div>
-          <div class="domino-half">{tile.left_val}</div>
-        </div>
-        <div :for={_tile <- hand} :if={@player_index != index} class="domino">
-          <div class="domino-half">?</div>
-          <div class="domino-divider"></div>
-          <div class="domino-half">?</div>
-        </div>
+  <div :for={{hand, index} <- Enum.with_index(@game.hands)} 
+       class={[
+         hand_class(@game, index),
+         @game.active_player == index && "border-l-4 border-green-500 pl-2"
+       ]}
+       aria-current={@game.active_player == index && "true"}>
+    <div class="player-info" role="heading" aria-level="3">
+      <span class="player-name">
+        {1 + index}: {Enum.at(@game.player_names, index)}
+      </span>
+      <span class="player-score">
+        {Enum.at(@game.scores, index)} points
+      </span>
+    </div>
+    
+    <div class="flex flex-wrap gap-2" role="list">
+      <div
+        :for={tile <- hand}
+        :if={@player_index == index && is_playable_tile?(@game, tile)}
+        class="domino domino-button"
+        role="listitem"
+      >
+        <button phx-click="play_tile" 
+                phx-value-id={tile.id} 
+                class="domino-half"
+                aria-label="Play domino {tile.right_val}-{tile.left_val}">
+          {tile.right_val}
+        </button>
+        <div class="domino-divider" aria-hidden="true"></div>
+        <button phx-click="play_tile" 
+                phx-value-id={tile.id} 
+                class="domino-half"
+                aria-label="Play domino {tile.left_val}-{tile.right_val}">
+          {tile.left_val}
+        </button>
+      </div>
+      <div
+        :for={tile <- hand}
+        :if={@player_index == index && !is_playable_tile?(@game, tile)}
+        class="domino"
+      >
+        <div class="domino-half">{tile.right_val}</div>
+        <div class="domino-divider"></div>
+        <div class="domino-half">{tile.left_val}</div>
+      </div>
+      <div :for={_tile <- hand} :if={@player_index != index} class="domino">
+        <div class="domino-half">?</div>
+        <div class="domino-divider"></div>
+        <div class="domino-half">?</div>
+      </div>
 
-        <div :if={
-          @game.active_player == index && @player_index == index && !has_playable_tiles?(@game)
-        }>
-          <button
-            :if={can_take_from_boneyard?(@game)}
-            phx-click="take_from_boneyard"
-            class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
-          >
-            Boneyard
-          </button>
-          <button
-            :if={!can_take_from_boneyard?(@game)}
-            phx-click="pass"
-            class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
-          >
-            Pass
-          </button>
-        </div>
+      <div :if={@game.active_player == index && @player_index == index && !has_playable_tiles?(@game)}>
+        <button
+          :if={can_take_from_boneyard?(@game)}
+          phx-click="take_from_boneyard"
+          class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+          aria-label="Draw tile from boneyard"
+        >
+          Boneyard
+        </button>
+        <button
+          :if={!can_take_from_boneyard?(@game)}
+          phx-click="pass"
+          class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white"
+          aria-label="Pass turn"
+        >
+          Pass
+        </button>
       </div>
     </div>
   </div>
 
-  <%!-- <button
-    :if={!@game.round_over?}
-      phx-click="finish_round"
-      class="finish-round-button"
-    >
-      Finish Round
-    </button> --%>
-  <div class="section-title">Line of Play</div>
+  <h2 class="section-title">Line of Play</h2>
   <div class="line-of-play">
-    <div class="flex flex-wrap gap-2 items-center">
-      <div :for={tile <- @game.line_of_play} class={tile_class(tile)}>
+    <div class="flex flex-wrap gap-2 items-center" 
+         role="list"
+         aria-label="Played dominoes">
+      <div :for={tile <- @game.line_of_play} 
+           class={tile_class(tile)}
+           role="listitem"
+           aria-label="Domino {tile.left_val}-{tile.right_val}">
         <div class="domino-half">{tile.left_val}</div>
-        <div class="domino-divider"></div>
+        <div class="domino-divider" aria-hidden="true"></div>
         <div class="domino-half">{tile.right_val}</div>
       </div>
     </div>
   </div>
 </div>
-<div :if={!Game.ready?(@game)}>
+
+<div :if={!Game.ready?(@game)} role="alert">
   <div>
     Waiting for {Game.open_hands(@game)} more player(s).
   </div>
   <div>
-    Invite more players with the url {"http://localhost:4000/game/join/#{@game.id}"}
+    <span id="invite-label">Invite more players with the url:</span>
+    <span aria-labelledby="invite-label">{"http://localhost:4000/game/join/#{@game.id}"}</span>
   </div>
 </div>
