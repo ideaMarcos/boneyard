@@ -22,6 +22,20 @@ defmodule Boneyard.GameServer do
     end
   end
 
+  def play_tile_on_right_side(game_id, tile_id) do
+    with {:ok, tile, game} <- call_by_name(game_id, {:play_tile_on_right_side, tile_id}),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, tile, game}
+    end
+  end
+
+  def play_tile_on_left_side(game_id, tile_id) do
+    with {:ok, tile, game} <- call_by_name(game_id, {:play_tile_on_left_side, tile_id}),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, tile, game}
+    end
+  end
+
   def pass(game_id) do
     with {:ok, game} <- call_by_name(game_id, :pass),
          :ok <- broadcast_game_updated!(game_id, game) do
@@ -78,6 +92,28 @@ defmodule Boneyard.GameServer do
   @impl GenServer
   def handle_call({:play_tile, tile_id}, _from, state) do
     case Game.play_tile(state.game, tile_id) do
+      {:ok, tile, game} ->
+        {:reply, {:ok, tile, game}, %{state | game: game}}
+
+      {:error, _reason} = error ->
+        {:reply, error, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_call({:play_tile_on_right_side, tile_id}, _from, state) do
+    case Game.play_tile_on_right_side(state.game, tile_id) do
+      {:ok, tile, game} ->
+        {:reply, {:ok, tile, game}, %{state | game: game}}
+
+      {:error, _reason} = error ->
+        {:reply, error, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_call({:play_tile_on_left_side, tile_id}, _from, state) do
+    case Game.play_tile_on_left_side(state.game, tile_id) do
       {:ok, tile, game} ->
         {:reply, {:ok, tile, game}, %{state | game: game}}
 

@@ -65,10 +65,13 @@ body {
 }
 
 .domino-button {
-    cursor: pointer;
-    transition: transform 0.2s;
+    cursor: -webkit-grab;
+    cursor: grab;
+    -webkit-transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
     background-color: var(--accent-playable);
     border-color: var(--border-dark);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .domino-button .domino-half {
@@ -96,8 +99,16 @@ body {
     box-shadow: 3px 8px 8px rgba(0, 0, 0, 0.4);
 }
 
+.domino-button.dragging {
+    opacity: 0.6;
+    -webkit-transform: scale(1.05);
+    transform: scale(1.05);
+    box-shadow: 5px 10px 10px rgba(0, 0, 0, 0.4);
+}
+
 .line-of-play {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
     padding: 20px;
@@ -105,6 +116,16 @@ body {
     border-radius: 12px;
     margin: 20px 0;
     border: 2px solid var(--border-dark);
+    min-height: 160px;
+}
+
+.line-of-play-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
 }
 
 .player-hand {
@@ -171,21 +192,58 @@ body {
 
 /* Add these new classes */
 .player-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 0.5rem;
 }
 
 .player-name {
-  font-weight: bold;
-  color: var(--text-dark);
+    font-weight: bold;
+    color: var(--text-dark);
 }
 
 .player-score {
-  color: var(--text-dark);
-  opacity: 0.8;
+    color: var(--text-dark);
+    opacity: 0.8;
+}
+
+/* Add these drag-drop related styles */
+.draggable {
+    cursor: -webkit-grab;
+    cursor: grab;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
+}
+
+.draggable:active {
+    cursor: -webkit-grabbing;
+    cursor: grabbing;
+}
+
+.drop-zone {
+    min-width: 70px;
+    min-height: 120px;
+    border: 3px dashed #666;
+    border-radius: 12px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    background-color: rgba(0, 100, 0, 0.1);
+    margin: 0 10px;
+}
+
+.drop-zone.drag-over {
+    background-color: rgba(0, 100, 0, 0.2);
+    border-color: var(--accent-playable);
 }

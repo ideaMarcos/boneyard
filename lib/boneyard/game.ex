@@ -218,8 +218,16 @@ defmodule Boneyard.Game do
     end
   end
 
+  def play_tile_on_right_side(%__MODULE__{} = game, tile_id) when is_binary(tile_id) do
+    play_tile_on_right_side(game, String.to_integer(tile_id))
+  end
+
   def play_tile_on_right_side(%__MODULE__{} = game, tile_id) when is_integer(tile_id) do
     do_play_tile(%__MODULE__{} = game, :right_side, tile_id)
+  end
+
+  def play_tile_on_left_side(%__MODULE__{} = game, tile_id) when is_binary(tile_id) do
+    play_tile_on_left_side(game, String.to_integer(tile_id))
   end
 
   def play_tile_on_left_side(%__MODULE__{} = game, tile_id) when is_integer(tile_id) do

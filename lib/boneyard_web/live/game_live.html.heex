@@ -10,12 +10,14 @@
 
   <h2 class="section-title">Hands</h2>
 
-  <div :for={{hand, index} <- Enum.with_index(@game.hands)} 
-       class={[
-         hand_class(@game, index),
-         @game.active_player == index && "border-l-4 border-green-500 pl-2"
-       ]}
-       aria-current={@game.active_player == index && "true"}>
+  <div
+    :for={{hand, index} <- Enum.with_index(@game.hands)}
+    class={[
+      hand_class(@game, index),
+      @game.active_player == index && "border-l-4 border-green-500 pl-2"
+    ]}
+    aria-current={@game.active_player == index && "true"}
+  >
     <div class="player-info" role="heading" aria-level="3">
       <span class="player-name">
         {1 + index}: {Enum.at(@game.player_names, index)}
@@ -23,45 +25,50 @@
       <span class="player-score">
         {Enum.at(@game.scores, index)} points
       </span>
+      <%= if @game.winning_player == index do %>
+        🏆
+      <% end %>
     </div>
-    
+
     <div class="flex flex-wrap gap-2" role="list">
       <div
         :for={tile <- hand}
-        :if={@player_index == index && is_playable_tile?(@game, tile)}
+        :if={@my_player_index == index && is_playable_tile?(@game, tile)}
         class="domino domino-button"
         role="listitem"
+        draggable="true"
+        phx-hook="DraggableTile"
+        id={"tile-#{tile.id}"}
+        data-tile-id={tile.id}
+        tabindex="0"
+        aria-label="Draggable domino {tile.right_val}-{tile.left_val}"
       >
-        <button phx-click="play_tile" 
-                phx-value-id={tile.id} 
-                class="domino-half"
-                aria-label="Play domino {tile.right_val}-{tile.left_val}">
+        <div class="domino-half" aria-label="Play domino {tile.right_val}-{tile.left_val}">
           {tile.right_val}
-        </button>
+        </div>
         <div class="domino-divider" aria-hidden="true"></div>
-        <button phx-click="play_tile" 
-                phx-value-id={tile.id} 
-                class="domino-half"
-                aria-label="Play domino {tile.left_val}-{tile.right_val}">
+        <div class="domino-half" aria-label="Play domino {tile.left_val}-{tile.right_val}">
           {tile.left_val}
-        </button>
+        </div>
       </div>
       <div
         :for={tile <- hand}
-        :if={@player_index == index && !is_playable_tile?(@game, tile)}
+        :if={@my_player_index == index && !is_playable_tile?(@game, tile)}
         class="domino"
       >
         <div class="domino-half">{tile.right_val}</div>
         <div class="domino-divider"></div>
         <div class="domino-half">{tile.left_val}</div>
       </div>
-      <div :for={_tile <- hand} :if={@player_index != index} class="domino">
+      <div :for={_tile <- hand} :if={@my_player_index != index} class="domino">
         <div class="domino-half">?</div>
         <div class="domino-divider"></div>
         <div class="domino-half">?</div>
       </div>
 
-      <div :if={@game.active_player == index && @player_index == index && !has_playable_tiles?(@game)}>
+      <div :if={
+        @game.active_player == index && @my_player_index == index && !has_playable_tiles?(@game)
+      }>
         <button
           :if={can_take_from_boneyard?(@game)}
           phx-click="take_from_boneyard"
@@ -84,16 +91,40 @@
 
   <h2 class="section-title">Line of Play</h2>
   <div class="line-of-play">
-    <div class="flex flex-wrap gap-2 items-center" 
-         role="list"
-         aria-label="Played dominoes">
-      <div :for={tile <- @game.line_of_play} 
-           class={tile_class(tile)}
-           role="listitem"
-           aria-label="Domino {tile.left_val}-{tile.right_val}">
+    <div class="line-of-play-content" role="list" aria-label="Line of play">
+      <div
+        :if={@my_player_index == @game.active_player}
+        class="drop-zone"
+        phx-hook="DropZone"
+        id="left-drop-zone"
+        data-side="left"
+        role="button"
+        aria-label="Drop zone for left side"
+      >
+        <span class="text-gray-500"></span>
+      </div>
+
+      <div
+        :for={tile <- @game.line_of_play}
+        class={tile_class(tile)}
+        role="listitem"
+        aria-label="Domino {tile.left_val}-{tile.right_val}"
+      >
         <div class="domino-half">{tile.left_val}</div>
         <div class="domino-divider" aria-hidden="true"></div>
         <div class="domino-half">{tile.right_val}</div>
+      </div>
+
+      <div
+        :if={@my_player_index == @game.active_player && @game.line_of_play != []}
+        class="drop-zone"
+        phx-hook="DropZone"
+        id="right-drop-zone"
+        data-side="right"
+        role="button"
+        aria-label="Drop zone for right side"
+      >
+        <span class="text-gray-500"></span>
       </div>
     </div>
   </div>
