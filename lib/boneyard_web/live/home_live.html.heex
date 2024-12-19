@@ -1,5 +1,46 @@
-<div>
-  <button phx-click="new_game" class="h-10 px-6 font-semibold rounded-md bg-black text-white">
-    New game
-  </button>
-</div>
+<main class="container mx-auto px-4 py-8" role="main">
+  <h1 class="text-2xl font-bold mb-6" id="page-title">
+    Welcome to Boneyard
+  </h1>
+  <.form
+    :let={f}
+    for={@changeset}
+    phx-submit="new_game"
+    class="max-w-sm"
+    aria-labelledby="form-title"
+    role="form"
+  >
+    <h2 id="form-title" class="sr-only">New Game</h2>
+
+    <div class="mb-4">
+      <label for="player_name" class="block text-sm font-medium mb-2">
+        Your name <span aria-hidden="true" class="text-red-500">*</span>
+        <span class="sr-only">Required</span>
+      </label>
+
+      <.input
+        field={f[:player_name]}
+        type="text"
+        name="player_name"
+        placeholder="Enter your name"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+        aria-describedby="player-name-description player-name-error"
+        aria-required="true"
+      />
+
+      <p id="player-name-description" class="mt-1 text-sm text-gray-500">
+        Name must be 2-20 characters long
+      </p>
+
+      <div id="player-name-error" class="mt-1 text-sm text-red-600" role="alert"></div>
+    </div>
+
+    <button
+      type="submit"
+      class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+      aria-label="Create new game with your name"
+    >
+      Start New Game
+    </button>
+  </.form>
+</main>

@@ -1,24 +1,35 @@
 # https://hexdocs.pm/phoenix_live_view/welcome.html
 defmodule BoneyardWeb.HomeLive do
-  use Phoenix.LiveView
+  use BoneyardWeb, :live_view
 
   alias Boneyard.Game
   alias Boneyard.GameSupervisor
+  alias BoneyardWeb.Changeset.NewGame
 
   def mount(_params, _session, socket) do
-    {:ok, socket}
+    changeset = NewGame.new() |> NewGame.changeset(%{})
+    {:ok, assign(socket, changeset: changeset)}
   end
 
-  def handle_event("new_game", _params, socket) do
-    game_id = Game.new_game_id()
-    GameSupervisor.start_game(game_id)
+  def handle_event("new_game", params, socket) do
+    changeset = NewGame.new() |> NewGame.changeset(params)
 
-    socket =
-      socket
-      |> put_flash(:info, "Joined successfully")
-      |> push_navigate(to: "/game/join/#{game_id}")
+    if changeset.valid? do
+      new_game = NewGame.apply(changeset)
 
-    {:noreply, socket}
+      game_id = Game.new_game_id()
+      GameSupervisor.start_game(game_id)
+
+      socket =
+        socket
+        |> put_flash(:info, "Joined successfully")
+        |> assign(:player_name, new_game.player_name)
+        |> push_navigate(to: "/game/join/#{game_id}?name=#{new_game.player_name}")
+
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, changeset: changeset)}
+    end
   end
 
   # defp put_temporary_flash(socket, level, message) do

@@ -3,10 +3,10 @@ defmodule BoneyardWeb.GameController do
 
   alias Boneyard.GameServer
 
-  def join(conn, %{"id" => game_id}) do
-    name = "player" <> to_string(Enum.random(1000..9999))
+  def join(conn, %{"id" => game_id} = params) do
+    player_name = Map.get(params, "name", "player" <> to_string(Enum.random(1000..9999)))
 
-    case GameServer.add_player(game_id, name) do
+    case GameServer.add_player(game_id, player_name) do
       {:ok, code} ->
         # {:error, :name_taken} ->
         #   socket

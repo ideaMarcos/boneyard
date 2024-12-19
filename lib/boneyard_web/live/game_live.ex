@@ -1,6 +1,7 @@
 # https://hexdocs.pm/phoenix_live_view/welcome.html
 defmodule BoneyardWeb.GameLive do
-  use Phoenix.LiveView
+  use BoneyardWeb, :live_view
+
   require Logger
   alias Boneyard.Cpu
   alias Boneyard.Game
@@ -42,7 +43,7 @@ defmodule BoneyardWeb.GameLive do
     game_id = Map.get(params, "id")
     player_code = Map.get(params, "player_code")
     {:ok, game} = GameServer.get_game(game_id)
-    # {:ok, _} = Boneyard.Presence.track(self(), game_id, player, %{})
+    # {:ok, _} = Boneyard.Presence.track(self(), game_id, player_code, %{})
     :ok = Phoenix.PubSub.subscribe(Boneyard.PubSub, game_id)
 
     player_index =

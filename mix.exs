@@ -47,6 +47,7 @@ defmodule Boneyard.MixProject do
        depth: 1},
       {:jason, ">= 0.0.0"},
       {:phoenix, ">= 0.0.0"},
+      {:phoenix_ecto, ">= 0.0.0"},
       {:phoenix_html, ">= 0.0.0"},
       {:phoenix_live_dashboard, ">= 0.0.0"},
       {:phoenix_live_reload, ">= 0.0.0", only: :dev},
