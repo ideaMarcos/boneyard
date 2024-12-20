@@ -1,4 +1,3 @@
-# https://hexdocs.pm/phoenix_live_view/welcome.html
 defmodule BoneyardWeb.HomeLive do
   use BoneyardWeb, :live_view
 

@@ -86,15 +86,11 @@ defmodule Boneyard.Game do
     end
   end
 
-  # https://github.com/elixir-plug/plug/blob/v1.16.1/lib/plug/request_id.ex#L81
   def new_game_id do
-    binary = <<
-      System.system_time(:nanosecond)::64,
-      :erlang.phash2({node(), self()}, 16_777_216)::24,
-      :erlang.unique_integer()::32
-    >>
+    length = Enum.random(10..15)
 
-    Base.encode32(binary)
+    Enum.take_random(?A..?Z, length)
+    |> to_string()
   end
 
   def start_round({:ok, %__MODULE__{id: id} = game}) do
