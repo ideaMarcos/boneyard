@@ -10,8 +10,15 @@ defmodule Boneyard.GameServer do
 
   def add_player(game_id, name) do
     with {:ok, code, game} <- call_by_name(game_id, {:add_player, name}),
-         :ok <- broadcast_players_updated!(game_id, game) do
+         :ok <- broadcast_player_added!(game_id, game) do
       {:ok, code}
+    end
+  end
+
+  def update_player_name(game_id, player_index, name) do
+    with {:ok, game} <- call_by_name(game_id, {:update_player_name, player_index, name}),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, game}
     end
   end
 
@@ -83,6 +90,17 @@ defmodule Boneyard.GameServer do
     case Game.add_player(state.game, name, code) do
       {:ok, game} ->
         {:reply, {:ok, code, game}, %{state | game: game}}
+
+      {:error, :name_taken} = error ->
+        {:reply, error, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_call({:update_player_name, player_index, name}, _from, state) do
+    case Game.update_player_name(state.game, player_index, name) do
+      {:ok, game} ->
+        {:reply, {:ok, game}, %{state | game: game}}
 
       {:error, :name_taken} = error ->
         {:reply, error, state}
@@ -169,8 +187,8 @@ defmodule Boneyard.GameServer do
   #   end
   # end
 
-  defp broadcast_players_updated!(game_id, game) do
-    broadcast!(to_string(game_id), :players_updated, game)
+  defp broadcast_player_added!(game_id, game) do
+    broadcast!(to_string(game_id), :player_added, game)
   end
 
   defp broadcast_game_updated!(game_id, game) do

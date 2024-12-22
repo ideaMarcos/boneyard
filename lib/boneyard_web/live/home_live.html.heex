@@ -4,8 +4,8 @@
   </h1>
   <.form
     :let={f}
-    for={@changeset}
-    phx-submit="new_game"
+    for={@form}
+    phx-submit="create_game"
     class="max-w-sm"
     aria-labelledby="form-title"
     role="form"
@@ -29,18 +29,17 @@
       />
 
       <p id="player-name-description" class="mt-1 text-sm text-gray-500">
-        Name must be 2-20 characters long
+        Name must be 1-10 characters long
       </p>
-
-      <div id="player-name-error" class="mt-1 text-sm text-red-600" role="alert"></div>
     </div>
 
-    <button
+    <.button
       type="submit"
+      phx-disable-with="Creating game..."
       class="h-10 px-6 font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
       aria-label="Create new game with your name"
     >
       Start New Game
-    </button>
+    </.button>
   </.form>
 </main>

@@ -7,6 +7,7 @@ defmodule BoneyardWeb.GameLive do
   alias Boneyard.Game
   alias Boneyard.GameServer
   alias Boneyard.Tile
+  alias BoneyardWeb.Changeset.GameOptions
 
   defp can_take_from_boneyard?(%Game{} = game) do
     case Game.take_from_boneyard(game) do
@@ -21,14 +22,6 @@ defmodule BoneyardWeb.GameLive do
 
   defp has_playable_tiles?(%Game{} = game) do
     Game.playable_tiles(game) != []
-  end
-
-  defp tile_class(tile) do
-    if Tile.is_double(tile) do
-      "domino"
-    else
-      "domino horizontal"
-    end
   end
 
   defp hand_class(%Game{} = game, hand_index) do
@@ -49,11 +42,15 @@ defmodule BoneyardWeb.GameLive do
     player_index =
       Enum.find_index(game.player_codes, fn x -> x == player_code end) || -1
 
+    changeset = GameOptions.new() |> GameOptions.changeset(%{})
+
     {:ok,
      socket
      |> assign(:game, game)
      |> assign_new(:my_player_index, fn -> player_index end)
-     |> assign(:my_player_code, player_code)}
+     |> assign(:my_player_code, player_code)
+     |> assign(:show_edit_name_modal, false)
+     |> assign(:form, to_form(changeset))}
   end
 
   def handle_event("finish_round", _params, socket) do
@@ -91,7 +88,57 @@ defmodule BoneyardWeb.GameLive do
     {:noreply, update(socket, :game, fn _ -> game end)}
   end
 
-  def handle_info(%{event: :players_updated, payload: game}, socket) do
+  def handle_event("edit_name", _params, socket) do
+    name = Enum.at(socket.assigns.game.player_names, socket.assigns.my_player_index)
+    changeset = GameOptions.new() |> GameOptions.changeset(%{"player_name" => name})
+
+    {:noreply,
+     socket
+     |> assign(:show_edit_name_modal, true)
+     |> assign(:form, to_form(changeset))}
+  end
+
+  def handle_event("save_name", %{"game_options" => %{"player_name" => name}}, socket) do
+    game = socket.assigns.game
+    my_player_index = socket.assigns.my_player_index
+
+    with changeset <-
+           GameOptions.new()
+           |> GameOptions.changeset(%{"player_name" => name}),
+         {:ok, game_options} <- GameOptions.apply_update(changeset),
+         {:ok, game} <-
+           update_player_name(game.id, my_player_index, game_options.player_name, changeset) do
+      {:noreply,
+       socket
+       |> assign(:game, game)
+       |> assign(:show_edit_name_modal, false)
+       |> put_temporary_flash(:info, "Name updated successfully")}
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply,
+         socket
+         |> assign(:form, to_form(changeset))}
+
+      {:error, :name_taken, changeset} ->
+        form =
+          to_form(changeset)
+          |> Map.update!(:errors, fn x ->
+            Keyword.put(x, :player_name, {"Name already taken", []})
+          end)
+
+        {:noreply, assign(socket, :form, form)}
+    end
+  end
+
+  def update_player_name(game_id, my_player_index, player_name, changeset) do
+    with {:ok, game} <- GameServer.update_player_name(game_id, my_player_index, player_name) do
+      {:ok, game}
+    else
+      {:error, reason} -> {:error, reason, changeset}
+    end
+  end
+
+  def handle_info(%{event: :player_added, payload: game}, socket) do
     player_index =
       Enum.find_index(game.player_codes, fn x -> x == socket.assigns.my_player_code end)
 
@@ -103,5 +150,57 @@ defmodule BoneyardWeb.GameLive do
 
   def handle_info(%{event: :game_updated, payload: game}, socket) do
     {:noreply, update(socket, :game, fn _ -> game end)}
+  end
+
+  def handle_info({:clear_flash, level}, socket) do
+    {:noreply, clear_flash(socket, Atom.to_string(level))}
+  end
+
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
+
+  attr :tile, Tile
+
+  def player_tile(assigns) do
+    ~H"""
+    <div class="domino" aria-label="Domino {@tile.left_val}/{@tile.right_val}">
+      <div class="domino-half">{@tile.right_val}</div>
+      <div class="domino-divider"></div>
+      <div class="domino-half">{@tile.left_val}</div>
+    </div>
+    """
+  end
+
+  attr :tile, Tile
+
+  def line_of_play_tile(assigns) do
+    ~H"""
+    <div
+      class={if Tile.is_double(@tile), do: "domino", else: "domino horizontal"}
+      role="listitem"
+      aria-label="Domino {@tile.left_val}/{@tile.right_val}"
+    >
+      <div class="domino-half">{@tile.left_val}</div>
+      <div class="domino-divider"></div>
+      <div class="domino-half">{@tile.right_val}</div>
+    </div>
+    """
+  end
+
+  attr :val, :integer, default: 0
+
+  def small_tile(assigns) do
+    ~H"""
+    <div class="domino-small">
+      <div class="domino-half">{if @val != 0, do: @val, else: ""}</div>
+    </div>
+    """
+  end
+
+  defp put_temporary_flash(socket, level, message) do
+    :timer.send_after(:timer.seconds(3), {:clear_flash, level})
+
+    put_flash(socket, level, message)
   end
 end

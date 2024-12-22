@@ -87,9 +87,7 @@ defmodule Boneyard.Game do
   end
 
   def new_game_id do
-    length = Enum.random(10..15)
-
-    Enum.take_random(?A..?Z, length)
+    Enum.take_random(?A..?Z, 11)
     |> to_string()
   end
 
@@ -500,6 +498,21 @@ defmodule Boneyard.Game do
          |> Map.update!(:player_names, &[name | &1])
          |> Map.update!(:player_codes, &[code | &1])}
         |> start_round()
+
+      true ->
+        {:error, :too_many_players}
+    end
+  end
+
+  def update_player_name(%__MODULE__{} = game, player_index, name) do
+    cond do
+      name in game.player_names ->
+        {:error, :name_taken}
+
+      player_index < game.num_hands ->
+        {:ok,
+         game
+         |> Map.update!(:player_names, fn names -> List.replace_at(names, player_index, name) end)}
 
       true ->
         {:error, :too_many_players}

@@ -1,3 +1,38 @@
+<.modal
+  :if={@show_edit_name_modal}
+  id="edit-name-modal"
+  show={@show_edit_name_modal}
+  on_cancel={JS.navigate(~p"/game/#{@game.id}/#{@my_player_code}")}
+>
+  <.form :let={f} for={@form} phx-submit="save_name" id="edit-name-form" role="form">
+    <div class="mb-4">
+      <.input
+        field={f[:player_name]}
+        type="text"
+        label="Your name"
+        aria-label="Enter your new name"
+      />
+    </div>
+
+    <p id="player-name-description" class="mt-1 text-sm text-gray-500">
+      Name must be 1-10 characters long
+    </p>
+
+    <div class="flex justify-end gap-3">
+      <.button
+        type="button"
+        phx-click={JS.navigate(~p"/game/#{@game.id}/#{@my_player_code}")}
+        class="px-4 py-2"
+      >
+        Cancel
+      </.button>
+      <.button type="submit" class="px-4 py-2 bg-green-600">
+        Save
+      </.button>
+    </div>
+  </.form>
+</.modal>
+
 <div :if={Game.ready?(@game)} class="container mx-auto px-4 py-8" role="main">
   <div class="mb-4 flex justify-between items-center">
     <h1 class="text-lg font-bold">
@@ -19,8 +54,25 @@
     aria-current={@game.active_player == index && "true"}
   >
     <div class="player-info" role="heading" aria-level="3">
+      <span>
+        {1 + index}:
+      </span>
+      <span>
+        <.small_tile val={length(hand)} />
+      </span>
       <span class="player-name">
-        {1 + index}: {Enum.at(@game.player_names, index)}
+        <%= if index == @my_player_index do %>
+          <button
+            type="button"
+            phx-click="edit_name"
+            class="underline hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-label="Edit your name"
+          >
+            {Enum.at(@game.player_names, index)}
+          </button>
+        <% else %>
+          {Enum.at(@game.player_names, index)}
+        <% end %>
       </span>
       <span class="player-score">
         {Enum.at(@game.scores, index)} points
@@ -51,18 +103,11 @@
             {tile.left_val}
           </div>
         </div>
-        <div :if={@my_player_index == index && !is_playable_tile?(@game, tile)} class="domino">
-          <div class="domino-half">{tile.right_val}</div>
-          <div class="domino-divider"></div>
-          <div class="domino-half">{tile.left_val}</div>
-        </div>
+        <.player_tile
+          :if={@my_player_index == index && !is_playable_tile?(@game, tile)}
+          tile={tile}
+        />
       <% end %>
-
-      <div :for={_tile <- hand} :if={@my_player_index != index} class="domino">
-        <div class="domino-half">?</div>
-        <div class="domino-divider"></div>
-        <div class="domino-half">?</div>
-      </div>
 
       <div :if={
         @game.active_player == index && @my_player_index == index && !has_playable_tiles?(@game)
@@ -102,16 +147,7 @@
         <span class="text-gray-500"></span>
       </div>
 
-      <div
-        :for={tile <- @game.line_of_play}
-        class={tile_class(tile)}
-        role="listitem"
-        aria-label="Domino {tile.left_val}-{tile.right_val}"
-      >
-        <div class="domino-half">{tile.left_val}</div>
-        <div class="domino-divider" aria-hidden="true"></div>
-        <div class="domino-half">{tile.right_val}</div>
-      </div>
+      <.line_of_play_tile :for={tile <- @game.line_of_play} tile={tile} />
 
       <div
         :if={@my_player_index == @game.active_player && @game.line_of_play != []}

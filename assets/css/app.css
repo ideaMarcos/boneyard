@@ -247,3 +247,30 @@ body {
     background-color: rgba(0, 100, 0, 0.2);
     border-color: var(--accent-playable);
 }
+
+/* Add these new classes for the unknown tile */
+.domino-small {
+    display: flex;
+    flex-direction: column;
+    width: 40px;
+    /* Reduced from 60px */
+    height: 60px;
+    /* Reduced from 100px */
+    background: var(--bg-light);
+    border: 2px solid var(--border-dark);
+    border-radius: 6px;
+    /* Slightly smaller radius */
+    margin: 5px;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.domino-small .domino-half {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: calc(var(--font-size-base) * 1.2);
+    /* Increased significantly from 0.9 */
+    font-weight: bold;
+    color: var(--text-dark);
+}

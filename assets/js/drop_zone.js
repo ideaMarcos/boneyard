@@ -14,7 +14,6 @@ export const DropZone = {
     });
 
     el.addEventListener("drop", e => {
-      console.log("dropped...")
       e.preventDefault();
       el.classList.remove("drag-over");
 

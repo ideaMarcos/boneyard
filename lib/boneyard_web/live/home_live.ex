@@ -3,37 +3,28 @@ defmodule BoneyardWeb.HomeLive do
 
   alias Boneyard.Game
   alias Boneyard.GameSupervisor
-  alias BoneyardWeb.Changeset.NewGame
+  alias BoneyardWeb.Changeset.GameOptions
 
   def mount(_params, _session, socket) do
-    changeset = NewGame.new() |> NewGame.changeset(%{})
-    {:ok, assign(socket, changeset: changeset)}
+    changeset = GameOptions.new() |> GameOptions.changeset(%{"player_name" => ""})
+    {:ok, assign(socket, form: to_form(changeset))}
   end
 
-  def handle_event("new_game", params, socket) do
-    changeset = NewGame.new() |> NewGame.changeset(params)
+  def handle_event("create_game", params, socket) do
+    GameOptions.new()
+    |> GameOptions.changeset(params)
+    |> GameOptions.apply_update()
+    |> case do
+      {:ok, game_options} ->
+        game_id = Game.new_game_id()
+        GameSupervisor.start_game(game_id)
 
-    if changeset.valid? do
-      new_game = NewGame.apply(changeset)
+        {:noreply,
+         socket
+         |> redirect(to: "/game/join/#{game_id}?name=#{game_options.player_name}")}
 
-      game_id = Game.new_game_id()
-      GameSupervisor.start_game(game_id)
-
-      socket =
-        socket
-        |> put_flash(:info, "Joined successfully")
-        |> assign(:player_name, new_game.player_name)
-        |> push_navigate(to: "/game/join/#{game_id}?name=#{new_game.player_name}")
-
-      {:noreply, socket}
-    else
-      {:noreply, assign(socket, changeset: changeset)}
+      {:error, changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
     end
   end
-
-  # defp put_temporary_flash(socket, level, message) do
-  #   :timer.send_after(:timer.seconds(3), {:clear_flash, level})
-
-  #   put_flash(socket, level, message)
-  # end
 end
