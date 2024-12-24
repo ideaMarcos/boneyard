@@ -91,7 +91,7 @@ defmodule Boneyard.GameServer do
       {:ok, game} ->
         {:reply, {:ok, code, game}, %{state | game: game}}
 
-      {:error, :name_taken} = error ->
+      {:error, _} = error ->
         {:reply, error, state}
     end
   end

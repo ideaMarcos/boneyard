@@ -13,7 +13,7 @@ defmodule BoneyardWeb.HomeLive do
   def handle_event("create_game", params, socket) do
     GameOptions.new()
     |> GameOptions.changeset(params)
-    |> GameOptions.apply_update()
+    |> GameOptions.apply_update_action()
     |> case do
       {:ok, game_options} ->
         game_id = Game.new_game_id()

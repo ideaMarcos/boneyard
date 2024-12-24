@@ -20,5 +20,5 @@ defmodule BoneyardWeb.Changeset.GameOptions do
     )
   end
 
-  def apply_update(changeset), do: apply_action(changeset, :update)
+  def apply_update_action(changeset), do: apply_action(changeset, :update)
 end

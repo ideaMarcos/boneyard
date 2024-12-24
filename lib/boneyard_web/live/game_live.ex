@@ -32,15 +32,21 @@ defmodule BoneyardWeb.GameLive do
     end
   end
 
-  def mount(params, _session, socket) do
+  def mount(params, session, socket) do
     game_id = Map.get(params, "id")
     player_code = Map.get(params, "player_code")
     {:ok, game} = GameServer.get_game(game_id)
-    # {:ok, _} = Boneyard.Presence.track(self(), game_id, player_code, %{})
-    :ok = Phoenix.PubSub.subscribe(Boneyard.PubSub, game_id)
 
     player_index =
       Enum.find_index(game.player_codes, fn x -> x == player_code end) || -1
+
+    if connected?(socket) do
+      with %{"name" => _name} <- session do
+        {:ok, _} = Boneyard.Presence.track(self(), game_id, player_code, %{})
+      end
+
+      :ok = Phoenix.PubSub.subscribe(Boneyard.PubSub, game_id)
+    end
 
     changeset = GameOptions.new() |> GameOptions.changeset(%{})
 
@@ -105,7 +111,7 @@ defmodule BoneyardWeb.GameLive do
     with changeset <-
            GameOptions.new()
            |> GameOptions.changeset(%{"player_name" => name}),
-         {:ok, game_options} <- GameOptions.apply_update(changeset),
+         {:ok, game_options} <- GameOptions.apply_update_action(changeset),
          {:ok, game} <-
            update_player_name(game.id, my_player_index, game_options.player_name, changeset) do
       {:noreply,
@@ -146,6 +152,14 @@ defmodule BoneyardWeb.GameLive do
      socket
      |> update(:my_player_index, fn _ -> player_index end)
      |> update(:game, fn _ -> game end)}
+  end
+
+  def handle_info(%{event: "presence_diff", payload: _}, socket) do
+    socket.assigns.game.id
+    |> Boneyard.Presence.list()
+    |> IO.inspect(label: "presence_diff")
+
+    {:noreply, socket}
   end
 
   def handle_info(%{event: :game_updated, payload: game}, socket) do
