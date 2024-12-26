@@ -7,8 +7,8 @@ defmodule BoneyardWeb.GameLive do
   alias Boneyard.Game
   alias Boneyard.GameServer
   alias Boneyard.Presence
+  alias Boneyard.Schema.GameOptions
   alias Boneyard.Tile
-  alias BoneyardWeb.Changeset.GameOptions
   alias Phoenix.LiveView.JS
 
   defp can_take_from_boneyard?(%Game{} = game) do
@@ -42,23 +42,25 @@ defmodule BoneyardWeb.GameLive do
     player_index =
       Enum.find_index(game.player_codes, fn x -> x == player_code end) || -1
 
-    if connected?(socket) do
-      with %{"name" => name} <- session do
-        if String.starts_with?(name, "guest") do
-          {:ok, _} = Presence.track(self(), game_id, name, %{emoji: random_emoji()})
-        end
+    with %{"name" => name} <- session do
+      if String.starts_with?(name, "guest") do
+        Presence.track(self(), game_id, name, %{emoji: random_emoji()})
       end
-
-      :ok = Presence.subscribe(game_id)
     end
 
-    presences = Presence.list(game_id)
+    Presence.subscribe(game_id)
+
+    presences =
+      Presence.list(game_id)
+      |> Presence.simple_presence_map()
+
     changeset = GameOptions.new() |> GameOptions.changeset(%{})
 
     {:ok,
      socket
      |> assign(:game, game)
-     |> assign(:presences, Presence.simple_presence_map(presences))
+     |> assign(:audience_changed, false)
+     |> assign(:presences, presences)
      |> assign_new(:my_player_index, fn -> player_index end)
      |> assign(:my_player_code, player_code)
      |> assign(:show_edit_name_modal, false)
@@ -67,6 +69,14 @@ defmodule BoneyardWeb.GameLive do
 
   defp random_emoji() do
     [128_640..128_676, 128_000..128_063, 129_408..129_455] |> Enum.random() |> Enum.random()
+  end
+
+  defp audience_emoji(audience_changed, audience_size) do
+    cond do
+      audience_changed -> "🫥"
+      audience_size > 2 -> "😁"
+      true -> "🙂"
+    end
   end
 
   def handle_event("finish_round", _params, socket) do
@@ -172,11 +182,18 @@ defmodule BoneyardWeb.GameLive do
     {:noreply, clear_flash(socket, Atom.to_string(level))}
   end
 
+  def handle_info(:clear_audience_changed, socket) do
+    {:noreply, assign(socket, :audience_changed, false)}
+  end
+
   def handle_info(%{event: "presence_diff", payload: diff}, socket) do
     # Presence.list(socket.assigns.game.id)
-    # |> IO.inspect(label: "presence_diff")
+    # |> IO.inspect(label: "EVENT presence_diff")
 
-    {:noreply, Presence.handle_diff(socket, diff)}
+    {:noreply,
+     socket
+     |> put_audience_changed()
+     |> Presence.handle_diff(diff)}
   end
 
   def handle_params(_params, _uri, socket) do
@@ -221,9 +238,13 @@ defmodule BoneyardWeb.GameLive do
     """
   end
 
-  defp put_temporary_flash(socket, level, message) do
-    :timer.send_after(:timer.seconds(3), {:clear_flash, level})
+  defp put_audience_changed(socket) do
+    Process.send_after(self(), :clear_audience_changed, 1000)
+    assign(socket, :audience_changed, true)
+  end
 
+  defp put_temporary_flash(socket, level, message) do
+    Process.send_after(self(), {:clear_flash, level}, 3000)
     put_flash(socket, level, message)
   end
 end

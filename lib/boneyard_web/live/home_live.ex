@@ -3,7 +3,7 @@ defmodule BoneyardWeb.HomeLive do
 
   alias Boneyard.Game
   alias Boneyard.GameSupervisor
-  alias BoneyardWeb.Changeset.GameOptions
+  alias Boneyard.Schema.GameOptions
 
   def mount(_params, _session, socket) do
     changeset = GameOptions.new() |> GameOptions.changeset(%{"player_name" => ""})

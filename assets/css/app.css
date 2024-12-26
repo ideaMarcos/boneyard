@@ -274,3 +274,106 @@ body {
     font-weight: bold;
     color: var(--text-dark);
 }
+
+/* Add these new classes */
+.game-header {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.game-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+}
+
+.boneyard-count {
+    font-size: 0.875rem;
+}
+
+.audience-panel {
+    position: fixed;
+    top: 4rem;
+    right: 1rem;
+    width: 16rem;
+    background-color: white;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    z-index: 40;
+    border: 1px solid rgb(229 231 235);
+}
+
+.audience-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.audience-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.audience-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.audience-emoji {
+    font-size: 1.125rem;
+}
+
+.edit-name-button {
+    text-decoration: underline;
+}
+
+.edit-name-button:hover {
+    color: rgb(21 128 61);
+    /* green-700 */
+}
+
+.edit-name-button:focus {
+    outline: none;
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+    --tw-ring-color: rgb(34 197 94);
+    /* green-500 */
+    --tw-ring-opacity: 1;
+    --tw-ring-color: rgb(34 197 94 / var(--tw-ring-opacity));
+}
+
+/* Add these classes for the audience toggle button */
+.audience-toggle {
+    position: fixed;
+    top: 5rem;
+    right: 1rem;
+    z-index: 50;
+    padding: 0.5rem;
+    border-radius: 9999px;
+    background-color: rgb(234 179 8);
+    /* yellow-500 */
+    color: white;
+}
+
+.audience-toggle:hover {
+    background-color: rgb(202 138 4);
+    /* yellow-600 */
+}
+
+.audience-toggle:focus {
+    outline: none;
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+    --tw-ring-color: rgb(253 224 71);
+    /* yellow-300 */
+}
+
+.audience-toggle-icon {
+    font-size: 2.0rem;
+}

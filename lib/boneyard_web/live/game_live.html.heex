@@ -34,27 +34,33 @@
 </.modal>
 
 <div :if={Game.ready?(@game)} class="container mx-auto px-4 py-8" role="main">
-  <div class="mb-4 flex justify-between items-center">
-    <h1 class="text-lg font-bold">
+  <div class="game-header">
+    <h1 class="game-title">
       Game {@game.id}
-      <button id="toggle-audience" class="" phx-click={JS.toggle(to: "#audience")}>
-        👀
-      </button>
     </h1>
-    <div class="text-sm" aria-live="polite">
+    <div class="boneyard-count" aria-live="polite">
       Boneyard: {length(@game.boneyard)} tiles remaining
     </div>
   </div>
 
-  <div
-    id="audience"
-    class="fixed top-16 right-4 w-64 bg-white shadow-xl rounded-lg p-4 z-40 border border-gray-200 hidden"
+  <button
+    id="toggle-audience"
+    phx-click={JS.toggle(to: "#audience")}
+    type="button"
+    class="audience-toggle"
+    aria-label="Toggle audience panel"
   >
-    <h2 class="text-xl font-bold mb-4">Audience</h2>
-    <ul class="space-y-2">
-      <li :for={{name, meta} <- @presences} class="flex items-center gap-2">
+    <span class="audience-toggle-icon">
+      {audience_emoji(@audience_changed, Enum.count(@presences))}
+    </span>
+  </button>
+
+  <div id="audience" class="audience-panel hidden">
+    <h2 class="audience-title">Audience</h2>
+    <ul class="audience-list">
+      <li :for={{name, meta} <- @presences} class="audience-item">
         <span>{name}</span>
-        <span class="text-lg">&#{meta.emoji};</span>
+        <span class="audience-emoji">&#{meta.emoji};</span>
       </li>
     </ul>
   </div>
@@ -81,7 +87,7 @@
           <button
             type="button"
             phx-click="edit_name"
-            class="underline hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="edit-name-button"
             aria-label="Edit your name"
           >
             {Enum.at(@game.player_names, index)}

@@ -1,19 +1,17 @@
 defmodule Boneyard.Presence do
   use Phoenix.Presence, otp_app: :boneyard, pubsub_server: Boneyard.PubSub
 
-  def fetch(game_id, presences) do
-    {:ok, game} = Boneyard.GameServer.get_game(game_id)
+  def fetch(_game_id, presences) do
+    # TODO if there was db, then get players from db
+    # {:ok, game} = Boneyard.GameServer.get_game(game_id)
+    # Enum.zip(game.player_codes, game.player_names)
+    # |> Enum.into(%{})
 
-    # TODO
-    Enum.zip(game.player_codes, game.player_names)
-    |> Enum.into(%{})
+    # for {key, %{metas: metas}} <- presences, into: %{} do
+    #   {key, %{metas: metas, user: users[String.to_integer(key)]}}
+    # end
 
-    # |> IO.inspect(label: "players")
-
-    for {key, %{metas: metas}} <- presences, into: %{} do
-      #   {key, %{metas: metas, user: users[String.to_integer(key)]}}
-      {key, %{metas: metas}}
-    end
+    presences
   end
 
   def subscribe(topic) do

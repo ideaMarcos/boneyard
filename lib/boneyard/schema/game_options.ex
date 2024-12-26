@@ -1,4 +1,4 @@
-defmodule BoneyardWeb.Changeset.GameOptions do
+defmodule Boneyard.Schema.GameOptions do
   use Ecto.Schema
   import Ecto.Changeset
 
