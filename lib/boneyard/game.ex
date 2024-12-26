@@ -87,7 +87,7 @@ defmodule Boneyard.Game do
   end
 
   def new_game_id do
-    Enum.take_random(?A..?Z, 11)
+    Enum.take_random(~c/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/, 9)
     |> to_string()
   end
 

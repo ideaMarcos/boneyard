@@ -37,10 +37,26 @@
   <div class="mb-4 flex justify-between items-center">
     <h1 class="text-lg font-bold">
       Game {@game.id}
+      <button id="toggle-audience" class="" phx-click={JS.toggle(to: "#audience")}>
+        👀
+      </button>
     </h1>
     <div class="text-sm" aria-live="polite">
       Boneyard: {length(@game.boneyard)} tiles remaining
     </div>
+  </div>
+
+  <div
+    id="audience"
+    class="fixed top-16 right-4 w-64 bg-white shadow-xl rounded-lg p-4 z-40 border border-gray-200 hidden"
+  >
+    <h2 class="text-xl font-bold mb-4">Audience</h2>
+    <ul class="space-y-2">
+      <li :for={{name, meta} <- @presences} class="flex items-center gap-2">
+        <span>{name}</span>
+        <span class="text-lg">&#{meta.emoji};</span>
+      </li>
+    </ul>
   </div>
 
   <h2 class="section-title">Hands</h2>

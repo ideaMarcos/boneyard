@@ -15,4 +15,31 @@ defmodule Boneyard.Presence do
       {key, %{metas: metas}}
     end
   end
+
+  def subscribe(topic) do
+    Phoenix.PubSub.subscribe(Boneyard.PubSub, topic)
+  end
+
+  def simple_presence_map(presences) do
+    Enum.into(presences, %{}, fn {topic, %{metas: [meta | _]}} ->
+      {topic, meta}
+    end)
+  end
+
+  defp add_presences(socket, joins) do
+    presences = Map.merge(socket.assigns.presences, simple_presence_map(joins))
+    Phoenix.Component.assign(socket, presences: presences)
+  end
+
+  defp remove_presences(socket, leaves) do
+    topics = Enum.map(leaves, fn {topic, _} -> topic end)
+    presences = Map.drop(socket.assigns.presences, topics)
+    Phoenix.Component.assign(socket, presences: presences)
+  end
+
+  def handle_diff(socket, presence_diff) do
+    socket
+    |> remove_presences(presence_diff.leaves)
+    |> add_presences(presence_diff.joins)
+  end
 end

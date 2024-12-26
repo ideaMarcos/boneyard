@@ -6,8 +6,10 @@ defmodule BoneyardWeb.GameLive do
   alias Boneyard.Cpu
   alias Boneyard.Game
   alias Boneyard.GameServer
+  alias Boneyard.Presence
   alias Boneyard.Tile
   alias BoneyardWeb.Changeset.GameOptions
+  alias Phoenix.LiveView.JS
 
   defp can_take_from_boneyard?(%Game{} = game) do
     case Game.take_from_boneyard(game) do
@@ -41,22 +43,30 @@ defmodule BoneyardWeb.GameLive do
       Enum.find_index(game.player_codes, fn x -> x == player_code end) || -1
 
     if connected?(socket) do
-      with %{"name" => _name} <- session do
-        {:ok, _} = Boneyard.Presence.track(self(), game_id, player_code, %{})
+      with %{"name" => name} <- session do
+        if String.starts_with?(name, "guest") do
+          {:ok, _} = Presence.track(self(), game_id, name, %{emoji: random_emoji()})
+        end
       end
 
-      :ok = Phoenix.PubSub.subscribe(Boneyard.PubSub, game_id)
+      :ok = Presence.subscribe(game_id)
     end
 
+    presences = Presence.list(game_id)
     changeset = GameOptions.new() |> GameOptions.changeset(%{})
 
     {:ok,
      socket
      |> assign(:game, game)
+     |> assign(:presences, Presence.simple_presence_map(presences))
      |> assign_new(:my_player_index, fn -> player_index end)
      |> assign(:my_player_code, player_code)
      |> assign(:show_edit_name_modal, false)
      |> assign(:form, to_form(changeset))}
+  end
+
+  defp random_emoji() do
+    [128_640..128_676, 128_000..128_063, 129_408..129_455] |> Enum.random() |> Enum.random()
   end
 
   def handle_event("finish_round", _params, socket) do
@@ -154,20 +164,19 @@ defmodule BoneyardWeb.GameLive do
      |> update(:game, fn _ -> game end)}
   end
 
-  def handle_info(%{event: "presence_diff", payload: _}, socket) do
-    socket.assigns.game.id
-    |> Boneyard.Presence.list()
-    |> IO.inspect(label: "presence_diff")
-
-    {:noreply, socket}
-  end
-
   def handle_info(%{event: :game_updated, payload: game}, socket) do
     {:noreply, update(socket, :game, fn _ -> game end)}
   end
 
   def handle_info({:clear_flash, level}, socket) do
     {:noreply, clear_flash(socket, Atom.to_string(level))}
+  end
+
+  def handle_info(%{event: "presence_diff", payload: diff}, socket) do
+    # Presence.list(socket.assigns.game.id)
+    # |> IO.inspect(label: "presence_diff")
+
+    {:noreply, Presence.handle_diff(socket, diff)}
   end
 
   def handle_params(_params, _uri, socket) do

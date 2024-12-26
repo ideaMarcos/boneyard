@@ -17,7 +17,7 @@ defmodule BoneyardWeb.GameController do
 
         conn
         |> put_session(:name, name)
-        |> redirect(to: "/game/#{game_id}/watch")
+        |> redirect(to: "/game/#{game_id}/guest")
     end
   end
 end
