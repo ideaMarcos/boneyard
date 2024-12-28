@@ -12,7 +12,7 @@ defmodule Boneyard.GameSupervisor do
   end
 
   def which_children do
-    Supervisor.which_children(__MODULE__)
+    DynamicSupervisor.which_children(__MODULE__)
   end
 
   def start_game(game_id) do

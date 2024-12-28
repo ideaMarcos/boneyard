@@ -14,6 +14,7 @@ defmodule Boneyard.Application do
       {Registry, keys: :unique, name: Boneyard.GameRegistry},
       Boneyard.Presence,
       {DynamicSupervisor, strategy: :one_for_one, name: Boneyard.GameSupervisor},
+      Boneyard.GameGarbageCollector,
       BoneyardWeb.Endpoint
     ]
 

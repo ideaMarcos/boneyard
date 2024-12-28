@@ -4,6 +4,10 @@ defmodule Boneyard.GameServer do
 
   alias Boneyard.Game
 
+  def get_game(pid) when is_pid(pid) do
+    GenServer.call(pid, :get_game)
+  end
+
   def get_game(game_id) do
     call_by_name(game_id, :get_game)
   end
