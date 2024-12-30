@@ -47,6 +47,10 @@ defmodule Boneyard.GameServer do
     end
   end
 
+  def end_game(game_id) do
+    call_by_name(game_id, :end_game)
+  end
+
   def pass(game_id) do
     with {:ok, game} <- call_by_name(game_id, :pass),
          :ok <- broadcast_game_updated!(game_id, game) do
@@ -142,6 +146,12 @@ defmodule Boneyard.GameServer do
       {:error, _reason} = error ->
         {:reply, error, state}
     end
+  end
+
+  @impl GenServer
+  def handle_call(:end_game, _from, state) do
+    {:ok, game} = Game.end_game(state.game)
+    {:reply, {:ok, game}, %{state | game: game}}
   end
 
   @impl GenServer

@@ -39,7 +39,7 @@ defmodule Boneyard.TileTest do
     end
 
     test "creates tile from two digits, not a double" do
-      val = Integer.undigits(Enum.take_random(0..9, 2))
+      val = Integer.undigits(Enum.take_random(1..9, 2))
       tile = Tile.new(val)
       assert tile.left_val in Integer.digits(val)
       assert tile.right_val in Integer.digits(val)

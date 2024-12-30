@@ -518,4 +518,8 @@ defmodule Boneyard.Game do
         {:error, :too_many_players}
     end
   end
+
+  def end_game(%__MODULE__{} = game) do
+    {:ok, %{game | game_over?: true}}
+  end
 end
