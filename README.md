@@ -13,6 +13,10 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
+
+https://github.com/user-attachments/assets/bd8372ca-ce8e-4baf-ab70-56bf774592c0
+
+
 ```
 iex> alias Boneyard.{Cpu, Game}
 iex> {:ok, game} = Game.new(4, 7, 6)
