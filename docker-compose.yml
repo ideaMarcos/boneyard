@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+
+  boneyard:
+    build: .
+    entrypoint:
+      - tini
+      - -v
+    command:
+      - /app/bin/server
+    ports:
+      - 4000:4000
+    environment:
+      - PORT=4000
+      - SECRET_KEY_BASE=0ifHan15bsgGLfSEeHB21ifI7c/qdQ32iUTHfPbaI7lRZ9DZ8ZBxCSxiM9PIQt/l

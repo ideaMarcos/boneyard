@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eux
+
+cd -P -- "$(dirname -- "$0")"
+PHX_SERVER=true exec ./boneyard start
