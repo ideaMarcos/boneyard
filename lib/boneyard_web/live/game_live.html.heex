@@ -44,6 +44,26 @@
   </div>
 
   <button
+    id="finish-round"
+    phx-click="finish_round"
+    type="button"
+    class="finish-round-button"
+    aria-label="Finish round"
+  >
+    Finish Round
+  </button>
+
+  <button
+    id="new-round"
+    phx-click="new_round"
+    type="button"
+    class="finish-round-button"
+    aria-label="New round"
+  >
+    New Round
+  </button>
+
+  <button
     id="toggle-audience"
     phx-click={JS.toggle(to: "#audience")}
     type="button"

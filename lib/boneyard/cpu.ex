@@ -63,7 +63,7 @@ defmodule Boneyard.Cpu do
   end
 
   defp do_play_until_round_over({:error, :round_over}, game) do
-    {:error, :round_over, game}
+    {:ok, :round_over, game}
   end
 
   defp do_play_until_round_over({:error, :no_playable_tiles}, game) do

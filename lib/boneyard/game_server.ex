@@ -2,6 +2,7 @@ defmodule Boneyard.GameServer do
   require Logger
   use GenServer
 
+  alias Boneyard.Cpu
   alias Boneyard.Game
 
   def get_game(pid) when is_pid(pid) do
@@ -62,6 +63,20 @@ defmodule Boneyard.GameServer do
     with {:ok, tile, game} <- call_by_name(game_id, :take_from_boneyard),
          :ok <- broadcast_game_updated!(game_id, game) do
       {:ok, tile, game}
+    end
+  end
+
+  def play_until_round_over(game_id) do
+    with {:ok, game} <- call_by_name(game_id, :play_until_round_over),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, game}
+    end
+  end
+
+  def new_round(game_id) do
+    with {:ok, game} <- call_by_name(game_id, :new_round),
+         :ok <- broadcast_game_updated!(game_id, game) do
+      {:ok, game}
     end
   end
 
@@ -174,6 +189,18 @@ defmodule Boneyard.GameServer do
       {:error, _reason} = error ->
         {:reply, error, state}
     end
+  end
+
+  @impl GenServer
+  def handle_call(:play_until_round_over, _from, state) do
+    {:ok, :round_over, game} = Cpu.play_until_round_over(state.game)
+    {:reply, {:ok, game}, %{state | game: game}}
+  end
+
+  @impl GenServer
+  def handle_call(:new_round, _from, state) do
+    {:ok, game} = Game.new_round(state.game)
+    {:reply, {:ok, game}, %{state | game: game}}
   end
 
   @spec broadcast!(String.t(), atom(), map()) :: :ok

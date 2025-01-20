@@ -3,7 +3,6 @@ defmodule BoneyardWeb.GameLive do
   use BoneyardWeb, :live_view
 
   require Logger
-  alias Boneyard.Cpu
   alias Boneyard.Game
   alias Boneyard.GameServer
   alias Boneyard.Presence
@@ -80,14 +79,13 @@ defmodule BoneyardWeb.GameLive do
   end
 
   def handle_event("finish_round", _params, socket) do
-    Cpu.play_until_round_over(socket.assigns.game)
-    |> case do
-      # {:ok, _tile, game} ->
-      #   {:noreply, update(socket, :game, fn _ -> game end)}
+    {:ok, _} = GameServer.play_until_round_over(socket.assigns.game.id)
+    {:noreply, socket}
+  end
 
-      {:error, :round_over, game} ->
-        {:noreply, update(socket, :game, fn _ -> game end)}
-    end
+  def handle_event("new_round", _params, socket) do
+    {:ok, _} = GameServer.new_round(socket.assigns.game.id)
+    {:noreply, socket}
   end
 
   def handle_event("play_tile", %{"id" => tile_id, "side" => side}, socket) do
@@ -105,13 +103,13 @@ defmodule BoneyardWeb.GameLive do
   end
 
   def handle_event("take_from_boneyard", _params, socket) do
-    {:ok, _tile, game} = GameServer.take_from_boneyard(socket.assigns.game.id)
-    {:noreply, update(socket, :game, fn _ -> game end)}
+    {:ok, _tile, _game} = GameServer.take_from_boneyard(socket.assigns.game.id)
+    {:noreply, socket}
   end
 
   def handle_event("pass", _params, socket) do
-    {:ok, game} = GameServer.pass(socket.assigns.game.id)
-    {:noreply, update(socket, :game, fn _ -> game end)}
+    {:ok, _game} = GameServer.pass(socket.assigns.game.id)
+    {:noreply, socket}
   end
 
   def handle_event("edit_name", _params, socket) do

@@ -2,6 +2,9 @@
   <h1 class="text-2xl font-bold mb-6" id="page-title">
     Welcome to Boneyard
   </h1>
+  -<div :for={node <- Node.list()}>
+    {node}
+  </div>-
   <.form
     :let={f}
     for={@form}
