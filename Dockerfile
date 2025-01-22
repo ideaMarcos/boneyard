@@ -33,6 +33,7 @@ RUN mix local.hex --force && \
 
 # set build ENV
 ENV MIX_ENV="prod"
+ENV SECRET_KEY_BASE="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 # install mix dependencies
 COPY mix.exs mix.lock ./
@@ -59,6 +60,7 @@ RUN mix compile
 
 # Changes to config/runtime.exs don't require recompiling the code
 COPY config/runtime.exs config/
+RUN mix ecto.setup
 
 COPY rel rel
 RUN mix release --path ./build
@@ -86,11 +88,12 @@ ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/build ./
+COPY --from=builder --chown=nobody:root /app/*.db ./bin
 
 USER nobody
 
 # If using an environment that doesn't automatically reap zombie processes, it is
 # advised to add an init process such as tini via `apt-get install`
 # above and adding an entrypoint. See https://github.com/krallin/tini for details
-ENTRYPOINT ["tini", "--"]
+# ENTRYPOINT ["tini", "--"]
 CMD ["/app/bin/server"]

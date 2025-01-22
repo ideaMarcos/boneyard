@@ -29,6 +29,14 @@ iex> {:error, reason, game} = Cpu.play_until_round_over(game)
 
 ```
 
-## Random
+## Learn more
+
+  * Official website: https://www.phoenixframework.org/
+  * Guides: https://hexdocs.pm/phoenix/overview.html
+  * Docs: https://hexdocs.pm/phoenix
+  * Forum: https://elixirforum.com/c/phoenix-forum
+  * Source: https://github.com/phoenixframework/phoenix
+
+## Other
 
 - `mix phx.new boneyard --database sqlite3 --no-mailer`

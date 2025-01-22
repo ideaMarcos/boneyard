@@ -12,9 +12,9 @@
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-	"remoteEnv": {
-		"DB_HOST": "host.docker.internal"
-	},
+	// "remoteEnv": {
+	// 	"DB_HOST": "host.docker.internal"
+	// },
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "cat /etc/os-release",
 	// Configure tool-specific properties.
@@ -37,8 +37,8 @@
 				"pkief.material-icon-theme",
 				"pkief.material-product-icons",
 				"phoenixframework.phoenix",
+				"qwtel.sqlite-viewer",
 				"redhat.vscode-yaml",
-				"tamasfe.even-better-toml",
 				"tyriar.sort-lines",
 				"vscode-icons-team.vscode-icons"
 			]

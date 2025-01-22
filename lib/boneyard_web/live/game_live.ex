@@ -245,4 +245,11 @@ defmodule BoneyardWeb.GameLive do
     Process.send_after(self(), {:clear_flash, level}, 3000)
     put_flash(socket, level, message)
   end
+
+  defp game_url(game_id) do
+    %{scheme: scheme, host: host, port: port} =
+      Enum.into(Boneyard.config([BoneyardWeb.Endpoint, :url]), %{})
+
+    URI.to_string(%URI{scheme: scheme, host: host, port: port, path: "/game/join/#{game_id}"})
+  end
 end

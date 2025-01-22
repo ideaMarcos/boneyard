@@ -2,7 +2,7 @@ import Config
 
 # Configure your database
 config :boneyard, Boneyard.Repo,
-  database: Path.expand("../boneyard_dev.db", __DIR__),
+  database: Path.expand("../boneyard.db", __DIR__),
   pool_size: 5,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true

@@ -11,6 +11,8 @@ config :boneyard,
   ecto_repos: [Boneyard.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :boneyard, :mix_env, Mix.env()
+
 config :boneyard, Oban,
   engine: Oban.Engines.Lite,
   queues: [default: 10],

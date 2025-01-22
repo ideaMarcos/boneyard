@@ -212,6 +212,8 @@
   </div>
   <div>
     <span id="invite-label">Invite more players with the url:</span>
-    <span aria-labelledby="invite-label">{"http://localhost:4000/game/join/#{@game.id}"}</span>
+    <span aria-labelledby="invite-label">
+      {game_url(@game.id)}
+    </span>
   </div>
 </div>
