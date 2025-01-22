@@ -1,6 +1,7 @@
 defmodule BoneyardWeb.Router do
   use BoneyardWeb, :router
   import Phoenix.LiveView.Router
+  import Oban.Web.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -23,6 +24,12 @@ defmodule BoneyardWeb.Router do
     live "/", HomeLive
     get "/game/join/:id", GameController, :join
     live "/game/:id/:player_code", GameLive
+  end
+
+  scope "/sadmin", BoneyardWeb do
+    pipe_through :browser
+
+    oban_dashboard "/oban"
   end
 
   # Other scopes may use custom stacks.

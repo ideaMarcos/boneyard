@@ -1,5 +1,15 @@
-# Created by https://www.toptal.com/developers/gitignore/api/macos,elixir,phoenix,visualstudiocode,linux
-# Edit at https://www.toptal.com/developers/gitignore?templates=macos,elixir,phoenix,visualstudiocode,linux
+# Created by https://www.toptal.com/developers/gitignore/api/linux,macos,elixir,phoenix,visualstudiocode,database
+# Edit at https://www.toptal.com/developers/gitignore?templates=linux,macos,elixir,phoenix,visualstudiocode,database
+
+### Database ###
+*.accdb
+*.db
+*.dbf
+*.mdb
+*.pdb
+*.sqlite3
+*.db-shm
+*.db-wal
 
 ### Elixir ###
 /_build
@@ -106,4 +116,4 @@ Temporary Items
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/macos,elixir,phoenix,visualstudiocode,linux
+# End of https://www.toptal.com/developers/gitignore/api/linux,macos,elixir,phoenix,visualstudiocode,database

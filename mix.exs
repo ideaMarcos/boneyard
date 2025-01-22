@@ -35,6 +35,8 @@ defmodule Boneyard.MixProject do
     [
       {:bandit, ">= 0.0.0"},
       {:dns_cluster, ">= 0.0.0"},
+      {:ecto_sql, ">= 0.0.0"},
+      {:ecto_sqlite3, ">= 0.0.0"},
       {:esbuild, ">= 0.0.0", runtime: Mix.env() == :dev},
       {:floki, ">= 0.0.0", only: :test},
       {:gettext, ">= 0.0.0"},
@@ -46,6 +48,8 @@ defmodule Boneyard.MixProject do
        compile: false,
        depth: 1},
       {:jason, ">= 0.0.0"},
+      {:oban, ">= 0.0.0"},
+      {:oban_web, ">= 0.0.0"},
       {:phoenix, ">= 0.0.0"},
       {:phoenix_ecto, ">= 0.0.0"},
       {:phoenix_html, ">= 0.0.0"},
@@ -66,7 +70,10 @@ defmodule Boneyard.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "assets.setup", "assets.build"],
+      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
+      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["tailwind boneyard", "esbuild boneyard"],
       "assets.deploy": [

@@ -22,7 +22,6 @@ https://github.com/user-attachments/assets/2d5d58f2-2657-4b70-a463-fa30af41ab92
 
 
 ```
-iex> alias Boneyard.{Cpu, Game}
 iex> {:ok, game} = Game.new(4, 7, 6)
 iex> Game.playable_tiles(game)
 iex> {:ok, tile, game} = Cpu.play_random_tile(game)
@@ -32,4 +31,4 @@ iex> {:error, reason, game} = Cpu.play_until_round_over(game)
 
 ## Random
 
-- `mix phx.new boneyard --no-ecto --no-mailer`
+- `mix phx.new boneyard --database sqlite3 --no-mailer`

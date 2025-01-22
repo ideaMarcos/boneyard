@@ -8,7 +8,19 @@
 import Config
 
 config :boneyard,
+  ecto_repos: [Boneyard.Repo],
   generators: [timestamp_type: :utc_datetime]
+
+config :boneyard, Oban,
+  engine: Oban.Engines.Lite,
+  queues: [default: 10],
+  repo: Boneyard.Repo,
+  plugins: [
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"*/5 * * * *", Boneyard.Workers.GameGarbageCollector}
+     ]}
+  ]
 
 # Configures the endpoint
 config :boneyard, BoneyardWeb.Endpoint,
