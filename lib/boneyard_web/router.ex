@@ -24,10 +24,6 @@ defmodule BoneyardWeb.Router do
     live "/", HomeLive
     get "/game/join/:id", GameController, :join
     live "/game/:id/:player_code", GameLive
-  end
-
-  scope "/sadmin", BoneyardWeb do
-    pipe_through :browser
 
     oban_dashboard "/oban"
   end

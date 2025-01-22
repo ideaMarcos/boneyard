@@ -20,7 +20,7 @@ config :boneyard, Oban,
   plugins: [
     {Oban.Plugins.Cron,
      crontab: [
-       {"*/5 * * * *", Boneyard.Workers.GameGarbageCollector}
+       {"* * * * *", Boneyard.Workers.GameGarbageCollector}
      ]}
   ]
 
