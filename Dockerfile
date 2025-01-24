@@ -64,13 +64,14 @@ COPY config/runtime.exs config/
 COPY rel rel
 RUN mix release --path ./build
 RUN mix ecto.setup
+RUN sqlite3 boneyard.db 'PRAGMA wal_checkpoint(TRUNCATE);'
 
 # start a new build stage so that the final image will only contain
 # the compiled release and other runtime necessities
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \
-  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates sqlite3 tini \
+  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates tini \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Set the locale
@@ -88,7 +89,7 @@ ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/build ./
-COPY --from=builder --chown=nobody:root /app/*.db* ./bin
+COPY --from=builder --chown=nobody:root /app/*.db ./bin
 
 USER nobody
 

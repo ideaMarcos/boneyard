@@ -26,7 +26,7 @@ config :boneyard, Oban,
 
 # Configures the endpoint
 config :boneyard, BoneyardWeb.Endpoint,
-  url: [host: "localhost", port: 4000, scheme: "http"],
+  url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: BoneyardWeb.ErrorHTML, json: BoneyardWeb.ErrorJSON],

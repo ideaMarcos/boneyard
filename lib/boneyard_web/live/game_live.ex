@@ -247,9 +247,8 @@ defmodule BoneyardWeb.GameLive do
   end
 
   defp game_url(game_id) do
-    %{scheme: scheme, host: host, port: port} =
-      Enum.into(Boneyard.config([BoneyardWeb.Endpoint, :url]), %{})
-
-    URI.to_string(%URI{scheme: scheme, host: host, port: port, path: "/game/join/#{game_id}"})
+    Boneyard.base_uri()
+    |> URI.append_path("/game/join/#{game_id}")
+    |> URI.to_string()
   end
 end

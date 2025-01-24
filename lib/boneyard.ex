@@ -23,5 +23,13 @@ defmodule Boneyard do
     end)
   end
 
+  def base_uri() do
+    config = Enum.into(Boneyard.config([BoneyardWeb.Endpoint, :url]), %{})
+    scheme = Map.get(config, :scheme, "http")
+    host = Map.get(config, :host, "localhost")
+    port = Map.get(config, :port, String.to_integer(System.get_env("PORT") || "4000"))
+    %URI{scheme: scheme, host: host, port: port}
+  end
+
   def mix_env, do: config([:mix_env])
 end
