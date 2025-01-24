@@ -2,9 +2,6 @@ services:
 
   boneyard:
     build: .
-    entrypoint:
-      - tini
-      - -v
     command:
       - /app/bin/server
     ports:
@@ -15,6 +12,5 @@ services:
       - FLY_PRIVATE_IP=127.0.0.1
       - PORT=4000
       # - PHX_HOST=boneyard.docker.localhost
-      - SECRET_KEY_BASE=0ifHan15bsgGLfSEeHB21ifI7c/qdQ32iUTHfPbaI7lRZ9DZ8ZBxCSxiM9PIQt/l
-      - RELEASE_COOKIE=F9rPt5WGhCgFZbGx_8eO449Oj0H8obmf3b8otgPoUVHfqPBsP2sC-Q==
+      - SECRET_KEY_BASE=0ifHan15bsgGLfSEeHB21ifI7c/qdQ32iUTHfPbaI7lRZ9DZ8ZBidEamarRcoSt/l
       # - DNS_CLUSTER_QUERY=boneyard.docker.internal

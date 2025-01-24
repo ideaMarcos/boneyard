@@ -21,7 +21,7 @@ ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 FROM ${BUILDER_IMAGE} as builder
 
 # install build dependencies
-RUN apt-get update -y && apt-get install -y build-essential git \
+RUN apt-get update -y && apt-get install -y build-essential git sqlite3 \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # prepare build dir
@@ -70,7 +70,7 @@ RUN mix release --path ./build
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \
-  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates tini \
+  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates sqlite3 tini \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Set the locale
