@@ -4,13 +4,32 @@ services:
     build: .
     command:
       - /app/bin/server
-    ports:
-      - 4000:4000
+    # ports:
+    #   - 4000:4000
     environment:
       - FLY_APP_NAME=boneyard
       - FLY_IMAGE_REF=ref
       - FLY_PRIVATE_IP=127.0.0.1
       - PORT=4000
-      # - PHX_HOST=boneyard.docker.localhost
+      - PHX_HOST=boneyard.docker.localhost
       - SECRET_KEY_BASE=0ifHan15bsgGLfSEeHB21ifI7c/qdQ32iUTHfPbaI7lRZ9DZ8ZBidEamarRcoSt/l
       # - DNS_CLUSTER_QUERY=boneyard.docker.internal
+    labels:
+      - "traefik.http.routers.boneyard.rule=Host(`boneyard.docker.localhost`)"
+      - "traefik.http.services.boneyard.loadbalancer.server.port=4000"
+
+  traefik:
+    image: traefik
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.docker
+      - --api.insecure
+      # - --log.level=DEBUG
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.docker.localhost`)"
+      - "traefik.http.routers.traefik.service=api@internal"

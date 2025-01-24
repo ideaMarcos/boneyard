@@ -250,5 +250,7 @@ defmodule BoneyardWeb.GameLive do
     Boneyard.base_uri()
     |> URI.append_path("/game/join/#{game_id}")
     |> URI.to_string()
+    |> String.split("//")
+    |> List.last()
   end
 end
