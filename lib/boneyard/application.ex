@@ -8,7 +8,6 @@ defmodule Boneyard.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      BoneyardWeb.Telemetry,
       Boneyard.Repo,
       {Oban, Application.fetch_env!(:boneyard, Oban)},
       {Ecto.Migrator,
@@ -18,7 +17,8 @@ defmodule Boneyard.Application do
       {Registry, keys: :unique, name: Boneyard.GameRegistry},
       Boneyard.Presence,
       {DynamicSupervisor, strategy: :one_for_one, name: Boneyard.GameSupervisor},
-      BoneyardWeb.Endpoint
+      BoneyardWeb.Endpoint,
+      BoneyardWeb.Telemetry
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

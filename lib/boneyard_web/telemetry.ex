@@ -78,15 +78,38 @@ defmodule BoneyardWeb.Telemetry do
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
-      summary("vm.total_run_queue_lengths.io")
+      summary("vm.total_run_queue_lengths.io"),
+
+      # Game Metrics
+      last_value("boneyard.active_players.total"),
+      last_value("boneyard.active_games.total")
     ]
+  end
+
+  def active_games_count do
+    :telemetry.execute([:boneyard, :active_games], %{
+      total: Registry.count(Boneyard.GameRegistry)
+    })
+  end
+
+  def active_players_count do
+    count =
+      Boneyard.GameSupervisor.which_children()
+      |> Enum.map(fn {_, pid, _, _} ->
+        {:ok, game} = Boneyard.GameServer.get_game(pid)
+        game.num_hands
+      end)
+      |> Enum.sum()
+
+    :telemetry.execute([:boneyard, :active_players], %{total: count})
   end
 
   defp periodic_measurements do
     [
       # A module, function and arguments to be invoked periodically.
       # This function must call :telemetry.execute/3 and a metric must be added above.
-      # {BoneyardWeb, :count_users, []}
+      {__MODULE__, :active_games_count, []},
+      {__MODULE__, :active_players_count, []}
     ]
   end
 end
